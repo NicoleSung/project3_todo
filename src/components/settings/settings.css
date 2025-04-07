@@ -1,0 +1,28 @@
+.settings-panel {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  max-width: 600px;
+  margin: 2rem auto;
+  font-family: system-ui, sans-serif;
+}
+
+.settings-panel h2 {
+  margin-bottom: 1rem;
+}
+
+.setting-item {
+  margin-bottom: 1rem;
+}
+
+.setting-item label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.setting-item select,
+.setting-item input[type="checkbox"] {
+  font-size: 1rem;
+}
