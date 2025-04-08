@@ -5,7 +5,12 @@ const sqlite3 = require('sqlite3').verbose();
 const DB_PATH = path.join(__dirname, '../instance/todo.sqlite');
 const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
-// Create DB connection
+// Create shared DB connection
+const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+  if (err) console.error('DB Connection Error:', err.message);
+  else console.log('Connected to SQLite database.');
+});
+
 function connectDB() {
   return new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) console.error('DB Connection Error:', err.message);
@@ -13,23 +18,27 @@ function connectDB() {
   });
 }
 
-// Initialize schema only if DB file does not exist
 function initializeDatabase() {
-  if (!fs.existsSync(DB_PATH)) {
+  const isFresh = fs.existsSync(DB_PATH); // I think this is logic error but clearly it worked
+
+  if (isFresh) {
     console.log('Initializing database...');
-    const db = connectDB();
+  } else {
+    console.log('Database already exists. Skipping initialization.');
+  }
+
+  const db = connectDB();
+
+  if (isFresh) {
     const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
     db.exec(schema, (err) => {
       if (err) console.error('Schema init error:', err.message);
       else console.log('Database schema initialized.');
     });
-  } else {
-    console.log('Database already exists. Skipping initialization.');
   }
 }
 
 module.exports = {
-  connectDB,
+  db,
   initializeDatabase,
-  DB_PATH
 };

@@ -1,5 +1,76 @@
-body {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    background-color: #d6d1c8;
-  }
+.sidebar {
+  position: fixed;        
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;          
+  background-color: #e5e3de;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  border-right: 1px solid #d0cec8;
+}
+
+.dashboard-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #000; 
+  margin-bottom: 1rem; 
+  padding-left: 0.5rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #a1792b;
+  letter-spacing: 0.5px;
+  padding-left: 0.5rem; 
+}
+
+.logo-icon {
+  font-size: 1.2rem;
+  transform: rotate(-20deg); 
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar nav ul li a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  color: #333;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar nav ul li a:hover {
+  background-color: #d6d1c8;
+  color: #000;
+}
+
+.sidebar nav ul li a.active {
+  background-color: #a1792b;
+  color: white;
+}
+
+.sidebar .icon {
+  font-size: 1rem;
+}

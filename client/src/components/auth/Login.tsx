@@ -26,7 +26,8 @@ export default function Login() {
     if (!res.ok) {
       setError(data.error || 'Login failed');
     } else {
-      navigate('/dashboard');
+      
+      navigate('/settings');
     }
   };
 

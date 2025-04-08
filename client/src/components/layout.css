@@ -39,8 +39,15 @@
 }
 
 .main-content {
+  margin-left: 220px;
   flex: 1;
   padding: 2rem;
   background: #f8f7f5;
   overflow-y: auto;
+  justify-content: flex-start;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
 }

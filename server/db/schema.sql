@@ -1,5 +1,5 @@
 -- Users table
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     user_key TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 
 -- INSERT INTO user table
-INSERT INTO user (username, user_key)
+INSERT OR IGNORE INTO users (username, user_key)
 VALUES (
     'admin',
     'scrypt:32768:8:1$HKBhqnc0Lcdr7fwo$412cb274429101ea5ec6b32c138df0efabca27b1ebad8239d1b911f413a04897cdca4d44b152a5b67037a12ec243e2e33db5676a64085ec0de1793bd6b9e7db7'

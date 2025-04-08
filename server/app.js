@@ -3,13 +3,14 @@ const path = require('path');
 const session = require('express-session');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
-const dbUtils = require('./db/db');
-const taskRoutes = require('./routes/tasks');
+const { initializeDatabase } = require('./db/db');
+const dashRoutes = require('./routes/tasks');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 
 // Config
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 const SECRET = process.env.SESSION_SECRET || 'supersecret';
 
 // Middleware
@@ -26,11 +27,12 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-dbUtils.initializeDatabase();
+initializeDatabase();
 
 // Mount routes
 app.use('/api/auth', authRoutes);
-app.use('/api', taskRoutes);
+app.use('/api', dashRoutes);
+app.use('/api',settingsRoutes);
 
 // Start server
 app.listen(PORT, () => {

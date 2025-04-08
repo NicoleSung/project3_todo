@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
-const db = require('../db/db').connectDB();
+const { db } = require('../db/db');
 
 // Register
 router.post('/register', (req, res) => {
@@ -11,25 +11,21 @@ router.post('/register', (req, res) => {
     }
 
     // Check if the user already exists
-    db.get('SELECT * FROM user WHERE username = ?', [username], (err, row) => {
+    db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
         if (row) {
         return res.status(409).json({ error: 'User already exists' });
         }
 
         // Hash the password
         const hashedPassword = bcrypt.hashSync(password, 10);
-        const insertQuery = 'INSERT INTO user (username, user_key) VALUES (?, ?)';
+        const insertQuery = 'INSERT INTO users (username, user_key) VALUES (?, ?)';
         
         db.run(insertQuery, [username, hashedPassword], function(err) {
         if (err) {
             console.error('DB SELECT error:', err);
             return res.status(500).json({ error: 'Database error during lookup' });
         }
-        
-        if (row) {
-        return res.status(409).json({ error: 'User already exists' });
-        }
-        
+                
         console.log('User created:', username);
 
         res.status(201).json({ message: 'User registered successfully' });
@@ -42,7 +38,7 @@ router.post('/register', (req, res) => {
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
-    db.get('SELECT * FROM user WHERE username = ?', [username], (err, user) => {
+    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
         if (err) return res.status(500).json({ error: 'Database error.' });
         if (!user) return res.status(401).json({ error: 'Incorrect username.' });
 
@@ -54,6 +50,15 @@ router.post('/login', (req, res) => {
     });
 });
 
+// Check if user is authenticated
+router.get('/me', (req, res) => {
+    if (req.session.userId) {
+      res.json({ authenticated: true, userId: req.session.userId });
+    } else {
+      res.status(401).json({ authenticated: false });
+    }
+  });
+  
 // Logout
 router.post('/logout', (req, res) => {
     req.session.destroy(() => {
