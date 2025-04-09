@@ -18,29 +18,23 @@ router.get('/tasks', (req, res) => {
 router.post('/tasks', (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-
+  
   const {
-    title,
-    description,
+    task_title,
+    task_details,
     priority_lev,
     est_hour,
     est_min,
     due_dates,
-    notification_yes,
-    scheduled_time
+    notification_yes
   } = req.body;
 
-  if (scheduled_time && dayjs(scheduled_time).isBefore(dayjs())) {
-    return res.status(400).json({ error: 'Scheduled time must be in the future.' });
+  if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
   let finalEndTime = null;
-  if (scheduled_time) {
-    finalEndTime = dayjs(scheduled_time)
-      .add(est_hour || 0, 'hour')
-      .add(est_min || 0, 'minute')
-      .toISOString();
-  }
+  let scheduled_time = null;
 
   const query = `
     INSERT INTO tasks (
@@ -52,14 +46,14 @@ router.post('/tasks', (req, res) => {
 
   db.run(query, [
     userId,
-    title,
-    description,
+    task_title,
+    task_details || '',
     priority_lev,
     est_hour,
     est_min,
     due_dates,
-    notification_yes || 0,
-    scheduled_time || null,
+    notification_yes,
+    scheduled_time,
     finalEndTime
   ], function (err) {
     if (err) return res.status(500).json({ error: 'Insert failed' });
@@ -67,56 +61,47 @@ router.post('/tasks', (req, res) => {
   });
 });
 
-// Update task (includes scheduling)
+// Update task metadata only
 router.put('/tasks/:id', (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
   const { id } = req.params;
   const {
-    title,
-    description,
+    task_title,
+    task_details,
     priority_lev,
     est_hour,
     est_min,
     due_dates,
-    notification_yes,
-    scheduled_time
+    notification_yes
   } = req.body;
 
-  if (scheduled_time && dayjs(scheduled_time).isBefore(dayjs())) {
-    return res.status(400).json({ error: 'Scheduled time must be in the future.' });
-  }
+  // First, get the original task
+  db.get('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [id, userId], (err, existingTask) => {
+    if (err || !existingTask) return res.status(500).json({ error: 'Failed to fetch task' });
 
-  let finalEndTime = null;
-  if (scheduled_time) {
-    finalEndTime = dayjs(scheduled_time)
-      .add(est_hour || 0, 'hour')
-      .add(est_min || 0, 'minute')
-      .toISOString();
-  }
+    // Check if timing info has changed
+    const timeChanged =
+      existingTask.due_dates !== due_dates ||
+      existingTask.est_hour !== est_hour ||
+      existingTask.est_min !== est_min;
 
-  const query = `
-    UPDATE tasks
-    SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ?, scheduled_time = ?, end_time = ?
-    WHERE id = ? AND user_id = ?
-  `;
+    const query = timeChanged
+      ? `UPDATE tasks SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ?, scheduled_time = NULL, end_time = NULL WHERE id = ? AND user_id = ?`
+      : `UPDATE tasks SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ? WHERE id = ? AND user_id = ?`;
 
-  db.run(query, [
-    title,
-    description,
-    priority_lev,
-    est_hour,
-    est_min,
-    due_dates,
-    notification_yes || 0,
-    scheduled_time || null,
-    finalEndTime,
-    id,
-    userId
-  ], function (err) {
-    if (err) return res.status(500).json({ error: 'Update failed' });
-    res.json({ message: 'Task updated with end_time calculated.' });
+    const params = timeChanged
+      ? [task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes || 0, id, userId]
+      : [task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes || 0, id, userId];
+
+    db.run(query, params, function (err) {
+      if (err) return res.status(500).json({ error: 'Update failed' });
+
+      res.json({
+        message: 'Task updated' + (timeChanged ? ' and schedule cleared' : '')
+      });
+    });
   });
 });
 
@@ -137,6 +122,7 @@ router.delete('/tasks/:id', (req, res) => {
 router.get('/tasks/suggest', (req, res) => {
   const userId = req.session.userId;
   const duration = parseInt(req.query.duration); // in minutes
+  const ignoreBreak = req.query.ignoreBreak === 'true'; // break buffer toggle
 
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!duration || duration <= 0) return res.status(400).json({ error: 'Invalid duration' });
@@ -154,18 +140,17 @@ router.get('/tasks/suggest', (req, res) => {
       }));
 
       let current = now;
+      const breakBuffer = ignoreBreak ? 0 : 15; // break in minutes
 
       for (let i = 0; i <= sorted.length; i++) {
         const nextStart = sorted[i]?.start || null;
-
-        const gapEnd = nextStart || dayjs().add(7, 'day'); // search up to 7 days ahead
+        const gapEnd = nextStart || now.add(7, 'day');
         const gapMinutes = gapEnd.diff(current, 'minute');
 
-        if (gapMinutes >= duration) {
+        if (gapMinutes >= (duration + breakBuffer)) {
           return res.json({ suggested_time: current.toISOString() });
         }
-
-        // Move pointer forward
+        // Move pointer forward to the next task's end time (or keep moving)
         current = sorted[i]?.end || current;
       }
 
@@ -174,5 +159,63 @@ router.get('/tasks/suggest', (req, res) => {
   );
 });
 
+// check if a custom schedule time overlaps with existing tasks
+router.post('/tasks/validate-time', (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const { scheduled_time, est_hour, est_min, ignoreBreak } = req.body;
+
+  if (!scheduled_time || est_hour == null || est_min == null)
+    return res.status(400).json({ error: 'Missing required fields' });
+
+  const proposedStart = dayjs(scheduled_time);
+  const proposedEnd = proposedStart.add(est_hour, 'hour').add(est_min, 'minute');
+  const breakBuffer = ignoreBreak ? 0 : 15;
+
+  db.all(
+    'SELECT scheduled_time, end_time FROM tasks WHERE user_id = ? AND scheduled_time IS NOT NULL',
+    [userId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+
+      const conflicts = rows.filter(row => {
+        const existingStart = dayjs(row.scheduled_time);
+        const existingEnd = dayjs(row.end_time);
+
+        // Add break buffer
+        const bufferedStart = existingStart.subtract(breakBuffer, 'minute');
+        const bufferedEnd = existingEnd.add(breakBuffer, 'minute');
+
+        return proposedEnd.isAfter(bufferedStart) && proposedStart.isBefore(bufferedEnd);
+      });
+
+      if (conflicts.length > 0) {
+        return res.status(409).json({ error: 'Time conflict with existing task', conflicts });
+      }
+
+      res.json({ message: 'Time slot is available' });
+    }
+  );
+});
+
+// Clear scheduled time for a task
+router.put('/tasks/:id/unschedule', (req, res) => {
+  const userId = req.session.userId;
+  const { id } = req.params;
+
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const query = `
+    UPDATE tasks
+    SET scheduled_time = NULL, end_time = NULL
+    WHERE id = ? AND user_id = ?
+  `;
+
+  db.run(query, [id, userId], function (err) {
+    if (err) return res.status(500).json({ error: 'Unassign failed' });
+    res.json({ message: 'Task unscheduled' });
+  });
+});
 
 module.exports = router;

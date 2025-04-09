@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import EditTaskModal from './EditTaskModal';
+import TaskModal from './TaskModal';
 import ScheduleTaskModal from './ScheduleTaskModal';
+import styles from './TaskItem.module.css';
+import { FaClock, FaCalendarAlt, FaCalendarCheck } from 'react-icons/fa';
 
 interface Props {
   task: {
     id: number;
-    title: string;
-    description: string;
+    task_title: string;
+    task_details: string;
     priority_lev: number;
     est_hour: number;
     est_min: number;
@@ -18,65 +20,86 @@ interface Props {
 }
 
 const priorityMap = ['Low', 'Medium', 'High'];
-const priorityColor = ['#00aa7f', '#e5a100', '#e74c3c'];
+const priorityColor = ['low', 'medium', 'high'];
 
 export default function TaskItem({ task, onTaskUpdated }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState(task.scheduled_time);
+  const [deleteChecked, setDeleteChecked] = useState(false);
+
 
   const deleteTask = async () => {
-    const confirmed = confirm('Are you sure you want to delete this task?');
-    if (!confirmed) return;
-
     await fetch(`/api/tasks/${task.id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
-
     onTaskUpdated();
+  };
+  
+  const handleUnschedule = async () => {
+    const res = await fetch(`/api/tasks/${task.id}/unschedule`, {
+      method: 'PUT',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      setScheduledTime(null);
+    }
   };
 
   return (
-    <div style={{
-      borderRadius: '12px',
-      background: 'white',
-      padding: '1rem',
-      marginBottom: '1rem',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }}>
-      <div>
-        <h3>{task.title}</h3>
-        <p style={{ color: '#666' }}>{task.description}</p>
-        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem' }}>
-          <span>🕒 {task.est_hour}h {task.est_min}m</span>
-          <span>📅 Due: {task.due_dates}</span>
-          {task.scheduled_time && (
-            <span>🗓 Scheduled: {task.scheduled_time.replace('T', ' ').slice(0, 16)}</span>
-          )}
-          <span style={{
-            backgroundColor: priorityColor[task.priority_lev - 1],
-            color: 'white',
-            padding: '2px 8px',
-            borderRadius: '5px'
-          }}>
-            {priorityMap[task.priority_lev - 1]}
-          </span>
+        <div className={styles.taskCard}>
+      <div className={styles.taskRow}>
+        {/* Left: Delete Checkbox */}
+        <input
+          type="checkbox"
+          checked={deleteChecked}
+          onChange={async (e) => {
+            if (e.target.checked) {
+              const confirmed = confirm('Are you sure you want to delete this task?');
+              if (confirmed) {
+                await deleteTask();
+              } else {
+                setDeleteChecked(false); // Revert checkbox
+              }
+            }
+          }}
+          className={styles.deleteCheckbox}
+          title="Delete task"
+        />
+
+
+        {/* Center: Task Info */}
+        <div className={styles.taskInfo}>
+          <div className={styles.taskTitleRow}>
+            <span className={styles.taskTitle}>{task.task_title}</span>
+          </div>
+          <div className={styles.meta}>
+            <span>{task.est_hour}h {task.est_min}m</span>
+            <span>•</span>
+            <span>Due: {task.due_dates}</span>
+            <span>•</span>
+            <span className={`${styles.priorityDot} ${styles[priorityColor[task.priority_lev - 1]]}`} />
+            {task.scheduled_time && (
+              <>
+                <span>•</span>
+                <span>Scheduled: {task.scheduled_time.replace('T', ' ').slice(0, 16)}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Action Buttons */}
+        <div className={styles.taskActions}>
+          <button onClick={() => setIsEditing(true)}>Edit</button>
+          <button onClick={() => setIsScheduling(true)}>Schedule</button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button onClick={() => setIsEditing(true)}>Edit</button>
-        <button onClick={deleteTask} style={{ color: 'red' }}>Delete</button>
-        {!task.scheduled_time && (
-          <button onClick={() => setIsScheduling(true)}>Schedule</button>
-        )}
-      </div>
-
+      {/* Modals */}
       {isEditing && (
-        <EditTaskModal
+        <TaskModal
           isOpen={isEditing}
           onClose={() => setIsEditing(false)}
           onTaskUpdated={onTaskUpdated}
@@ -93,5 +116,6 @@ export default function TaskItem({ task, onTaskUpdated }: Props) {
         />
       )}
     </div>
+
   );
 }

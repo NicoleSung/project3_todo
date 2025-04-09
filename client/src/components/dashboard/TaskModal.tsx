@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Modal from 'react-modal';
 import styles from './TaskModal.module.css';
+import { FaTimes } from 'react-icons/fa';
 
 Modal.setAppElement('#root');
 
 interface Task {
-  id: number;
-  title: string;
-  description: string;
+  id?: number;
+  task_title: string;
+  task_details: string;
   priority_lev: number;
   est_hour: number;
   est_min: number;
   due_dates: string;
-  notification_yes: boolean;
-  scheduled_time?: string;
+  notification_yes: number;
 }
 
 interface Props {
@@ -24,29 +24,25 @@ interface Props {
 }
 
 export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Props) {
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [priority, setPriority] = useState(task?.priority_lev || 1);
-  const [estHour, setEstHour] = useState(task?.est_hour || 0);
-  const [estMin, setEstMin] = useState(task?.est_min || 0);
-  const [dueDate, setDueDate] = useState(task?.due_dates || '');
-  const [notification, setNotification] = useState(task?.notification_yes || false);
-  const [scheduledTime, setScheduledTime] = useState(task?.scheduled_time || '');
+  const isEdit = !!task;
 
-  const handleSave = async () => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
     const payload = {
-      title,
-      description,
-      priority_lev: priority,
-      est_hour: estHour,
-      est_min: estMin,
-      due_dates: dueDate,
-      notification_yes: notification,
-      scheduled_time: scheduledTime
+      task_title: formData.get('title'),
+      task_details: formData.get('details'),
+      priority_lev: Number(formData.get('priority')),
+      est_hour: Number(formData.get('hours')),
+      est_min: Number(formData.get('minutes')),
+      due_dates: formData.get('due_date'),
+      notification_yes: formData.get('notify') ? 1 : 0
     };
 
-    const method = task ? 'PUT' : 'POST';
-    const endpoint = task ? `/api/tasks/${task.id}` : '/api/tasks';
+    const endpoint = isEdit ? `/api/tasks/${task!.id}` : '/api/tasks';
+    const method = isEdit ? 'PUT' : 'POST';
 
     await fetch(endpoint, {
       method,
@@ -55,19 +51,9 @@ export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Prop
       body: JSON.stringify(payload)
     });
 
+    form.reset();
     onClose();
     onTaskUpdated();
-  };
-
-  const suggestTime = async () => {
-    const duration = estHour * 60 + estMin;
-    const res = await fetch(`/api/tasks/suggest?duration=${duration}`, {
-      credentials: 'include'
-    });
-    const data = await res.json();
-    if (data.suggested_time) {
-      setScheduledTime(data.suggested_time.slice(0, 16)); // Trim for datetime-local input
-    }
   };
 
   return (
@@ -77,58 +63,53 @@ export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Prop
       className={styles.modal}
       overlayClassName={styles.overlay}
     >
+      <button className={styles.closeButton} onClick={onClose} aria-label="Close modal">
+        <FaTimes />
+      </button>
+
       <div className={styles.header}>
-        <h1>{task ? 'Edit Task' : 'Add Task'}</h1>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
+        <h1>{isEdit ? 'Edit Task' : 'Add Task'}</h1>
+        
       </div>
 
-      <div className={styles.form}>
+      <form className={styles.form} onSubmit={handleSubmit}>
         <label>Title</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input name="title" defaultValue={task?.task_title} required />
 
         <label>Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+        <textarea name="description" defaultValue={task?.task_details} rows={3} />
 
         <label>Priority</label>
-        <select value={priority} onChange={(e) => setPriority(parseInt(e.target.value))}>
-          <option value={1}>Low</option>
-          <option value={2}>Medium</option>
-          <option value={3}>High</option>
-        </select>
+        <div className={styles.radioGroup}>
+          <label><input type="radio" name="priority" value="3" defaultChecked={task?.priority_lev === 3 || !isEdit} /> High</label>
+          <label><input type="radio" name="priority" value="2" defaultChecked={task?.priority_lev === 2} /> Medium</label>
+          <label><input type="radio" name="priority" value="1" defaultChecked={task?.priority_lev === 1} /> Low</label>
+        </div>
 
         <label>Estimated Time</label>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <input type="number" value={estHour} onChange={(e) => setEstHour(+e.target.value)} placeholder="Hours" />
-          <input type="number" value={estMin} onChange={(e) => setEstMin(+e.target.value)} placeholder="Minutes" />
+        <div className={styles.row}>
+          <input name="hours" type="number" min="0" max = "100" defaultValue={task?.est_hour || 0} required/>
+          <span>:</span>
+          <input name="minutes" type="number" min="0" max = "59" defaultValue={task?.est_min || 0} required/>
         </div>
 
         <label>Due Date</label>
-        <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        <input name="due_date" type="date" defaultValue={task?.due_dates} required />
 
-        <label>Scheduled Time</label>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <label className={styles.toggleLabel}>
           <input
-            type="datetime-local"
-            value={scheduledTime}
-            onChange={(e) => setScheduledTime(e.target.value)}
-          />
-          <button type="button" onClick={suggestTime}>Suggest</button>
-        </div>
-
-        <label>
-          <input
+            name="notify"
             type="checkbox"
-            checked={notification}
-            onChange={(e) => setNotification(e.target.checked)}
+            defaultChecked={task?.notification_yes === 1}
           />
-          Notify Me
+          Send notifications
         </label>
 
         <div className={styles.actions}>
-          <button onClick={handleSave}>Save</button>
-          <button onClick={onClose}>Cancel</button>
+          <button type="button" onClick={onClose} className={styles.cancel}>Cancel</button>
+          <button type="submit">{isEdit ? 'Update Task' : 'Add Task'}</button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

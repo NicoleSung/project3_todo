@@ -1,0 +1,55 @@
+.dashboardPanel {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  width: 800px;
+  margin: 3rem 2rem 3rem 10rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  height: 550px;
+}
+  
+  .tasklist {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .goldbutton {
+    background-color: #b48b2f;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 130px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    box-shadow: none;
+    appearance: none;
+  }
+  
+  .goldbutton:hover {
+    background-color: #a07a29;
+  }
+  
+    
+  h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .headerrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  

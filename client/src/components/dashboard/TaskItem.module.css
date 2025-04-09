@@ -1,0 +1,89 @@
+.taskCard {
+    background-color: var(--bg-panel);
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .taskRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  .deleteCheckbox {
+    transform: scale(1.3);
+    cursor: pointer;
+    accent-color: #e05d5d;
+  }
+  
+  .taskInfo {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .taskTitleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .taskTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .meta {
+    font-size: 0.95rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .priorityDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  .low {
+    background-color: #2e7d32; /* green */
+  }
+  
+  .medium {
+    background-color: #f1b64b; /* yellow */
+  }
+  
+  .high {
+    background-color: #d32f2f; /* red */
+  }
+  
+  .taskActions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .taskActions button {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .taskActions button:hover {
+    background-color: var(--accent-hover);
+  }
+  
