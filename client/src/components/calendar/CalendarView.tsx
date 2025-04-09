@@ -51,8 +51,8 @@ export default function CalendarView() {
         <div className="calendar-nav">
           <button onClick={handlePrev}>&lt;</button>
           <button onClick={() => setDate(dayjs())}>Today</button>
-          <span>{date.format(view === 'week' ? '[Week of] MMM D, YYYY' : 'MMMM D, YYYY')}</span>
           <button onClick={handleNext}>&gt;</button>
+          <span>{date.format(view === 'week' ? '[Week of] MMM D, YYYY' : 'MMMM D, YYYY')}</span>
         </div>
         <div className="calendar-tabs">
           <button onClick={() => setView('day')} className={view === 'day' ? 'active' : ''}>Day</button>

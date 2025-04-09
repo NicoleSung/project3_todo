@@ -146,6 +146,7 @@
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
+  color: black;
 }
 
 .calendar-nav button:hover {
