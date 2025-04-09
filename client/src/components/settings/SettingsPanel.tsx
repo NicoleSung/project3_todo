@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './settings.css';
 
 export default function SettingsPanel() {
+  const navigate = useNavigate();
   const [defaultView, setDefaultView] = useState<'day' | 'week'>('day');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [username, setUsername] = useState('');
@@ -86,11 +88,16 @@ export default function SettingsPanel() {
 
       </div>
 
-      <button onClick={saveSettings}>Save Settings</button>
-
-      <div className={`status-message ${status ? 'show' : ''}`}>
-        {status}
+        <button onClick={saveSettings}>Save Settings</button>
+        {status && <p>{status}</p>}
       </div>
-    </div>
+
+      <div className="settings-panel">
+        <h2>User Device</h2>
+        <p><b>Get device information</b></p>
+        <button onClick={() => navigate('/settings/device-info')}>Device Info</button>
+      </div>
+      
+    </>
   );
 }

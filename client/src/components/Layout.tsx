@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { FaHome, FaCalendarAlt, FaCog, FaCheck} from 'react-icons/fa';
+import { FaHome, FaCalendarAlt, FaCog, FaCheck, FaMobile} from 'react-icons/fa';
 
 export default function DashboardLayout() {
   return (
@@ -53,5 +53,6 @@ export default function DashboardLayout() {
         <Outlet />
       </main>
     </div>
+    
   );
 }
