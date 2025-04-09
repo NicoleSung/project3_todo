@@ -46,12 +46,6 @@ export default function DashboardLayout() {
                 Settings
               </NavLink>
             </li>
-            <li>
-              <NavLink to="/device-info" className={({ isActive }) => isActive ? 'active' : ''}>
-                <FaMobile className="icon" />
-                Device Info
-              </NavLink>
-            </li>
           </ul>
         </nav>
       </aside>
@@ -59,5 +53,6 @@ export default function DashboardLayout() {
         <Outlet />
       </main>
     </div>
+    
   );
 }

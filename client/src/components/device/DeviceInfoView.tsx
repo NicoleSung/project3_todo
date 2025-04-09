@@ -56,6 +56,7 @@ export default function DeviceInfoView() {
       <h2>Latitude: {latitude}</h2>
       <h2>Longitude: {longitude}</h2>
       {error && <p>Error: {error}</p>}
+      <button onClick={() => window.location.href = '/settings'}>Return to Settings</button>
     </div>
   );
 };

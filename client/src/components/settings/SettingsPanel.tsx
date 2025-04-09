@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './settings.css';
 
 export default function SettingsPanel() {
+  const navigate = useNavigate();
   const [defaultView, setDefaultView] = useState<'day' | 'week'>('day');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [status, setStatus] = useState('');
@@ -39,30 +41,39 @@ export default function SettingsPanel() {
   }, []);
 
   return (
-    <div className="settings-panel">
-      <h2>User Settings</h2>
+    <>
+      <div className="settings-panel">
+        <h2>User Settings</h2>
 
-      <div className="setting-item">
-        <label>Default Calendar View:</label>
-        <select value={defaultView} onChange={(e) => setDefaultView(e.target.value as 'day' | 'week')}>
-          <option value="day">Day</option>
-          <option value="week">Week</option>
-        </select>
+        <div className="setting-item">
+          <label>Default Calendar View:</label>
+          <select value={defaultView} onChange={(e) => setDefaultView(e.target.value as 'day' | 'week')}>
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+          </select>
+        </div>
+
+        <div className="setting-item">
+          <label>
+            <input
+              type="checkbox"
+              checked={notificationsEnabled}
+              onChange={(e) => setNotificationsEnabled(e.target.checked)}
+            />
+            Enable Notifications
+          </label>
+        </div>
+
+        <button onClick={saveSettings}>Save Settings</button>
+        {status && <p>{status}</p>}
       </div>
 
-      <div className="setting-item">
-        <label>
-          <input
-            type="checkbox"
-            checked={notificationsEnabled}
-            onChange={(e) => setNotificationsEnabled(e.target.checked)}
-          />
-          Enable Notifications
-        </label>
+      <div className="settings-panel">
+        <h2>User Device</h2>
+        <p><b>Get device information</b></p>
+        <button onClick={() => navigate('/settings/device-info')}>Device Info</button>
       </div>
-
-      <button onClick={saveSettings}>Save Settings</button>
-      {status && <p>{status}</p>}
-    </div>
+      
+    </>
   );
 }
