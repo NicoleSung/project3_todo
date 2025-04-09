@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../components/settings/settings.css';
 
 export default function SettingsPanel() {
@@ -6,6 +7,7 @@ export default function SettingsPanel() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [username, setUsername] = useState('');
   const [status, setStatus] = useState('');
+  const navigate = useNavigate();
 
   // Fetch user settings on mount
   const fetchSettings = async () => {
@@ -52,6 +54,11 @@ export default function SettingsPanel() {
     fetchSettings();
   }, []);
 
+
+const displayDeviceInfo = () => { // Display device information
+  navigate('/settings/device-info');
+};
+
   return (
     <div className="settings-panel">
       <h2>Account</h2>
@@ -91,6 +98,12 @@ export default function SettingsPanel() {
       <div className={`status-message ${status ? 'show' : ''}`}>
         {status}
       </div>
+
+      <h2>Device Information</h2>
+      <div className="device-info">
+      </div>
+      <button onClick={displayDeviceInfo}>More</button>
+
     </div>
   );
 }
