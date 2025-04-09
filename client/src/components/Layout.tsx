@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { FaHome, FaCalendarAlt, FaCog, FaCheck} from 'react-icons/fa';
+import { FaHome, FaCalendarAlt, FaCog, FaCheck, FaMobile} from 'react-icons/fa';
 
 export default function DashboardLayout() {
   return (
@@ -44,6 +44,12 @@ export default function DashboardLayout() {
               <NavLink to="/settings" className={({ isActive }) => isActive ? 'active' : ''}>
                 <FaCog className="icon" />
                 Settings
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/device-info" className={({ isActive }) => isActive ? 'active' : ''}>
+                <FaMobile className="icon" />
+                Device Info
               </NavLink>
             </li>
           </ul>
