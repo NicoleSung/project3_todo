@@ -77,7 +77,7 @@ h2 {
   border-radius: 6px;
   border: 1px solid #ccc;
   background-color: #fff;
-  width: 70px;
+  width: 80px;
 }
 
 /* Checkbox specific layout */
@@ -138,3 +138,5 @@ h2 {
   opacity: 1;
   transform: translateY(0);
 }
+
+
