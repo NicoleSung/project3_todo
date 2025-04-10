@@ -3,8 +3,6 @@ import Modal from 'react-modal';
 import styles from './TaskModal.module.css';
 import { FaTimes } from 'react-icons/fa';
 
-Modal.setAppElement('#root');
-
 interface Task {
   id?: number;
   task_title: string;
@@ -41,7 +39,7 @@ export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Prop
       notification_yes: formData.get('notify') ? 1 : 0
     };
 
-    const endpoint = isEdit ? `/api/tasks/${task!.id}` : '/api/tasks';
+    const endpoint = isEdit ? `/api/tasks/${task.id}` : '/api/tasks';
     const method = isEdit ? 'PUT' : 'POST';
 
     await fetch(endpoint, {
@@ -77,7 +75,7 @@ export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Prop
         <input name="title" defaultValue={task?.task_title} required />
 
         <label>Description</label>
-        <textarea name="description" defaultValue={task?.task_details} rows={3} />
+        <textarea name="details" defaultValue={task?.task_details} rows={3} />
 
         <label>Priority</label>
         <div className={styles.radioGroup}>

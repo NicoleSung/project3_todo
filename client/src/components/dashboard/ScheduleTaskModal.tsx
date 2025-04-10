@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
-import styles from './TaskModal.module.css';
-
-Modal.setAppElement('#root');
+import styles from './ScheduleModal.module.css';
 
 interface Props {
   task: {
     id: number;
     task_title: string;
+    task_details: string;
+    priority_lev: number;
     est_hour: number;
     est_min: number;
+    due_dates: string;
+    notification_yes: number;
   };
+
   isOpen: boolean;
   onClose: () => void;
   onTaskUpdated: () => void;
@@ -29,10 +32,9 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
     setLoading(true);
     setIsTimeValid(false);
     const duration = task.est_hour * 60 + task.est_min;
-    const res = await fetch(
-      `/api/tasks/suggest?duration=${duration}&ignoreBreak=${ignoreBreak}`,
-      { credentials: 'include' }
-    );
+    const res = await fetch(`/api/tasks/suggest?duration=${duration}&ignoreBreak=${ignoreBreak}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
     if (data.suggested_time) {
       setSuggested(data.suggested_time.slice(0, 16));
@@ -64,23 +66,29 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
       setSuggested(customTime);
       setIsTimeValid(true);
     } else {
-      setValidationStatus(`${data.error || 'Time conflict.'}`);
+      setValidationStatus(data.error || 'Time conflict.');
       setIsTimeValid(false);
     }
     setValidating(false);
   };
 
   const confirmSchedule = async () => {
-    await fetch(`/api/tasks/${task.id}`, {
+    await fetch(`/api/tasks/schedule/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        scheduled_time: suggested,
+        task_title: task.task_title,
+        task_details: task.task_details,
+        priority_lev: task.priority_lev,
         est_hour: task.est_hour,
-        est_min: task.est_min
+        est_min: task.est_min,
+        due_dates: task.due_dates,
+        notification_yes: task.notification_yes,
+        scheduled_time: suggested
       })
     });
+
     onTaskUpdated();
     onClose();
   };
@@ -89,26 +97,27 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
     <Modal
       isOpen={isOpen}
       onRequestClose={onClose}
-      className={styles.modal}
-      overlayClassName={styles.overlay}
+      className={styles['suggestion-modal']}
+      overlayClassName={styles['suggestion-overlay']}
     >
-      <div className={styles.header}>
+      <div className={styles['suggestion-header']}>
         <h2>Schedule Suggestion</h2>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
+        <button className={styles['suggestion-closeButton']} onClick={onClose}>×</button>
       </div>
 
-      <div className={styles.form}>
-        <p><strong>{task.task_title}</strong></p>
+      <div className={styles['suggestion-form']}>
+        <p><strong>Task:</strong> {task.task_title}</p>
         <p>Based on your schedule and task priority, we recommend:</p>
+
         {suggested && (
-          <div style={{ background: '#eee', padding: '1rem', borderRadius: '0.75rem' }}>
+          <div className={styles['suggestion-suggestionBlock']}>
             {new Date(suggested).toLocaleDateString(undefined, {
               weekday: 'long', month: 'long', day: 'numeric'
-            })}
-            <br />
+            })}<br />
             {new Date(suggested).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – 
             {new Date(new Date(suggested).getTime() + (task.est_hour * 60 + task.est_min) * 60000)
-              .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({task.est_hour}h {task.est_min}m)
+              .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
+            ({task.est_hour}h {task.est_min}m)
           </div>
         )}
 
@@ -125,19 +134,16 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
             setIsTimeValid(false);
             setValidationStatus('');
           }}
-          className={styles.datetimeInput}
+          className={styles['suggestion-datetimeInput']}
         />
+
         <button onClick={validateCustomTime} disabled={!customTime || validating}>
           {validating ? 'Validating...' : 'Validate Time'}
         </button>
 
-        {validationStatus && (
-          <p style={{ color: validationStatus.startsWith('✅') ? 'green' : 'red' }}>
-            {validationStatus}
-          </p>
-        )}
+        {validationStatus && <p>{validationStatus}</p>}
 
-        <label className={styles.checkboxLabel}>
+        <label className={styles['suggestion-checkboxLabel']}>
           <input
             type="checkbox"
             checked={ignoreBreak}
@@ -146,8 +152,8 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
           Ignore 15-min break rule between tasks
         </label>
 
-        <div className={styles.actions}>
-          <button onClick={onClose} className={styles.cancelButton}>Cancel</button>
+        <div className={styles['suggestion-actions']}>
+          <button onClick={onClose} className={styles['suggestion-cancelButton']}>Cancel</button>
           <button onClick={confirmSchedule} disabled={!suggested || !isTimeValid}>
             Schedule Now
           </button>

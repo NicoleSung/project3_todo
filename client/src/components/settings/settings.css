@@ -9,7 +9,8 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  height: 720px;
+  height: 550px;
+  overflow-y: auto;
 }
 
 /* Section headers */

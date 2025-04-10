@@ -61,12 +61,13 @@ router.post('/tasks', (req, res) => {
   });
 });
 
-// Update task metadata only
+// Update task
 router.put('/tasks/:id', (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
   const { id } = req.params;
+
   const {
     task_title,
     task_details,
@@ -77,26 +78,53 @@ router.put('/tasks/:id', (req, res) => {
     notification_yes
   } = req.body;
 
-  // First, get the original task
-  db.get('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [id, userId], (err, existingTask) => {
-    if (err || !existingTask) return res.status(500).json({ error: 'Failed to fetch task' });
+  if (
+    !task_title ||
+    priority_lev == null ||
+    est_hour == null ||
+    est_min == null ||
+    !due_dates
+  ) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
 
-    // Check if timing info has changed
+  const priority = Number(priority_lev);
+  const hour = Number(est_hour);
+  const minute = Number(est_min);
+  const notify = notification_yes ? 1 : 0;
+
+  db.get('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [id, userId], (err, existingTask) => {
+    if (err) {
+      console.error('DB error fetching task:', err);
+      return res.status(500).json({ error: 'Failed to fetch task' });
+    }
+
+    if (!existingTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
     const timeChanged =
       existingTask.due_dates !== due_dates ||
-      existingTask.est_hour !== est_hour ||
-      existingTask.est_min !== est_min;
+      existingTask.est_hour !== hour ||
+      existingTask.est_min !== minute;
 
     const query = timeChanged
-      ? `UPDATE tasks SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ?, scheduled_time = NULL, end_time = NULL WHERE id = ? AND user_id = ?`
-      : `UPDATE tasks SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ? WHERE id = ? AND user_id = ?`;
+      ? `UPDATE tasks
+           SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ?, scheduled_time = NULL, end_time = NULL
+         WHERE id = ? AND user_id = ?`
+      : `UPDATE tasks
+           SET task_title = ?, task_details = ?, priority_lev = ?, est_hour = ?, est_min = ?, due_dates = ?, notification_yes = ?
+         WHERE id = ? AND user_id = ?`;
 
     const params = timeChanged
-      ? [task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes || 0, id, userId]
-      : [task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes || 0, id, userId];
+      ? [task_title, task_details, priority, hour, minute, due_dates, notify, id, userId]
+      : [task_title, task_details, priority, hour, minute, due_dates, notify, id, userId];
 
     db.run(query, params, function (err) {
-      if (err) return res.status(500).json({ error: 'Update failed' });
+      if (err) {
+        console.error('DB error updating task:', err);
+        return res.status(500).json({ error: 'Update failed', details: err.message });
+      }
 
       res.json({
         message: 'Task updated' + (timeChanged ? ' and schedule cleared' : '')
@@ -105,6 +133,49 @@ router.put('/tasks/:id', (req, res) => {
   });
 });
 
+// schedule
+router.put('/tasks/schedule/:id', (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const { id } = req.params;
+  const { scheduled_time, est_hour, est_min } = req.body;
+
+  if (!scheduled_time || est_hour == null || est_min == null) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const hour = Number(est_hour);
+  const minute = Number(est_min);
+
+  const start = dayjs(scheduled_time);
+  const end = start.add(hour, 'hour').add(minute, 'minute').toISOString();
+
+  if (start.isBefore(dayjs())) {
+    return res.status(400).json({ error: 'Scheduled time cannot be in the past' });
+  }
+
+  db.get('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [id, userId], (err, existingTask) => {
+    if (err || !existingTask) {
+      return res.status(404).json({ error: 'Task not found or access denied' });
+    }
+
+    const query = `UPDATE tasks
+                   SET scheduled_time = ?, end_time = ?
+                   WHERE id = ? AND user_id = ?`;
+
+    const params = [scheduled_time, end, id, userId];
+
+    db.run(query, params, function (err) {
+      if (err) {
+        console.error('Error updating schedule:', err);
+        return res.status(500).json({ error: 'Failed to update schedule' });
+      }
+
+      res.json({ message: 'Task scheduled successfully' });
+    });
+  });
+});
 
 // Delete task
 router.delete('/tasks/:id', (req, res) => {
@@ -173,6 +244,10 @@ router.post('/tasks/validate-time', (req, res) => {
   const proposedEnd = proposedStart.add(est_hour, 'hour').add(est_min, 'minute');
   const breakBuffer = ignoreBreak ? 0 : 15;
 
+  if (proposedStart.isBefore(dayjs())) {
+    return res.status(400).json({ error: 'Scheduled time cannot be in the past' });
+  }
+
   db.all(
     'SELECT scheduled_time, end_time FROM tasks WHERE user_id = ? AND scheduled_time IS NOT NULL',
     [userId],
@@ -200,7 +275,7 @@ router.post('/tasks/validate-time', (req, res) => {
 });
 
 // Clear scheduled time for a task
-router.put('/tasks/:id/unschedule', (req, res) => {
+router.put('/tasks/unschedule/:id/', (req, res) => {
   const userId = req.session.userId;
   const { id } = req.params;
 
@@ -218,4 +293,36 @@ router.put('/tasks/:id/unschedule', (req, res) => {
   });
 });
 
+// call from calendar
+router.put('/tasks/calendarEdit/:id', (req, res) => {
+  const userId = req.session.userId;
+  const { id } = req.params;
+  const { task_title, task_details, scheduled_time, est_hour, est_min } = req.body;
+
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  if (!scheduled_time || est_hour == null || est_min == null) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const start = dayjs(scheduled_time);
+  const end = start.add(est_hour, 'hour').add(est_min, 'minute').toISOString();
+
+  const query = `
+    UPDATE tasks
+    SET task_title = ?, task_details = ?, scheduled_time = ?, end_time = ?
+    WHERE id = ? AND user_id = ?
+  `;
+
+  db.run(query, [task_title, task_details, scheduled_time, end, id, userId], function (err) {
+    if (err) {
+      console.error('Calendar edit error:', err.message);
+      return res.status(500).json({ error: 'Failed to update calendar info' });
+    }
+    res.json({ message: 'Task updated from calendar' });
+  });
+});
+
+
 module.exports = router;
+

@@ -27,7 +27,7 @@ export default function Login() {
       setError(data.error || 'Login failed');
     } else {
       
-      navigate('/settings');
+      navigate('/dashboard');
     }
   };
 

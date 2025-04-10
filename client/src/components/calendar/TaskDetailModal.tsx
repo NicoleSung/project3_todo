@@ -8,20 +8,21 @@ Modal.setAppElement('#root');
 interface Props {
   task: {
     id: number;
-    title: string;
-    description: string;
-    scheduled_time?: string;
-    end_time?: string;
+    task_title: string;
+    task_details: string;
+    scheduled_time: string;
+    end_time: string;
+    est_hour: number;
+    est_min: number;
   };
   onClose: () => void;
   onRefresh: () => void;
 }
 
 export default function TaskDetailModal({ task, onClose, onRefresh }: Props) {
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description);
-  const [scheduledTime, setScheduledTime] = useState(task.scheduled_time || '');
-  const [endTime, setEndTime] = useState(task.end_time || '');
+  const [title, setTitle] = useState(task.task_title);
+  const [description, setDescription] = useState(task.task_details);
+  const [scheduledTime, setScheduledTime] = useState(task.scheduled_time);
 
   const handleDelete = async () => {
     await fetch(`/api/tasks/${task.id}`, {
@@ -34,22 +35,24 @@ export default function TaskDetailModal({ task, onClose, onRefresh }: Props) {
 
   const handleUpdate = async () => {
     const payload = {
-      title,
-      description,
+      task_title: title,
+      task_details: description,
       scheduled_time: scheduledTime,
-      end_time: endTime
+      est_hour: task.est_hour,
+      est_min: task.est_min
     };
-
-    await fetch(`/api/tasks/${task.id}`, {
+  
+    await fetch(`/api/tasks/calendarEdit/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(payload)
     });
-
+  
     onClose();
     onRefresh();
   };
+  
 
   return (
     <Modal
@@ -77,15 +80,22 @@ export default function TaskDetailModal({ task, onClose, onRefresh }: Props) {
           onChange={(e) => setScheduledTime(e.target.value)}
         />
 
-        <label>End Time (optional)</label>
+        <label>End Time</label>
         <input
           type="datetime-local"
-          value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}
+          value={task.end_time ? dayjs(task.end_time).format('YYYY-MM-DDTHH:mm') : ''}
+          readOnly
         />
 
+        <label>Duration</label>
+        <input
+          type="text"
+          value={`${task.est_hour}h ${task.est_min}m`}
+          readOnly
+/>
+
         <div className={styles.actions}>
-          <button onClick={handleDelete} style={{ color: 'red' }}>Delete</button>
+          <button onClick={handleDelete}>Done</button>
           <button onClick={onClose}>Cancel</button>
           <button onClick={handleUpdate}>Save Changes</button>
         </div>

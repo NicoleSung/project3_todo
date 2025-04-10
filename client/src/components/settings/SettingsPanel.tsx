@@ -56,48 +56,37 @@ export default function SettingsPanel() {
 
   return (
     <div className="settings-panel">
-      <h2>Account</h2>
-      <div className="account-info">
-        <input type="email" value={username} readOnly />
-        <button onClick={logout}>Log Out</button>
+      <h2>User Settings</h2>
+
+      <div className="setting-item">
+        <label>Default Calendar View:</label>
+        <select value={defaultView} onChange={(e) => setDefaultView(e.target.value as 'day' | 'week')}>
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+        </select>
       </div>
 
-      <h2>Preferences</h2>
-      <div className="settings-grid">
-        <div className="setting-item row">
-          <label htmlFor="view">Default Calendar View</label>
-          <select
-            id="view"
-            value={defaultView}
-            onChange={(e) => setDefaultView(e.target.value as 'day' | 'week')}
-          >
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-          </select>
-        </div>
-
-        <div className="setting-row spaced">
-          <span>Enable Notifications</span>
+      <div className="setting-item">
+        <label>
           <input
-            id="notify"
             type="checkbox"
             checked={notificationsEnabled}
             onChange={(e) => setNotificationsEnabled(e.target.checked)}
           />
-        </div>
-
+          Enable Notifications
+        </label>
       </div>
 
         <button onClick={saveSettings}>Save Settings</button>
         {status && <p>{status}</p>}
-      </div>
+      
 
       <div className="settings-panel">
         <h2>User Device</h2>
         <p><b>Get device information</b></p>
         <button onClick={() => navigate('/settings/device-info')}>Device Info</button>
+      </div>     
       </div>
-      
     </>
   );
 }

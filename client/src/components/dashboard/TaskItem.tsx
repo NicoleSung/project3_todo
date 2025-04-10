@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TaskModal from './TaskModal';
 import ScheduleTaskModal from './ScheduleTaskModal';
 import styles from './TaskItem.module.css';
@@ -19,6 +19,7 @@ interface Props {
   onTaskUpdated: () => void;
 }
 
+
 const priorityMap = ['Low', 'Medium', 'High'];
 const priorityColor = ['low', 'medium', 'high'];
 
@@ -28,6 +29,10 @@ export default function TaskItem({ task, onTaskUpdated }: Props) {
   const [scheduledTime, setScheduledTime] = useState(task.scheduled_time);
   const [deleteChecked, setDeleteChecked] = useState(false);
 
+  useEffect(() => {
+    setScheduledTime(task.scheduled_time || null);
+  }, [task.scheduled_time]);
+  
 
   const deleteTask = async () => {
     await fetch(`/api/tasks/${task.id}`, {
@@ -38,13 +43,14 @@ export default function TaskItem({ task, onTaskUpdated }: Props) {
   };
   
   const handleUnschedule = async () => {
-    const res = await fetch(`/api/tasks/${task.id}/unschedule`, {
+    const res = await fetch(`/api/tasks/unschedule/${task.id}`, {
       method: 'PUT',
       credentials: 'include'
     });
 
     if (res.ok) {
       setScheduledTime(null);
+      onTaskUpdated();
     }
   };
 
@@ -93,7 +99,11 @@ export default function TaskItem({ task, onTaskUpdated }: Props) {
         {/* Right: Action Buttons */}
         <div className={styles.taskActions}>
           <button onClick={() => setIsEditing(true)}>Edit</button>
-          <button onClick={() => setIsScheduling(true)}>Schedule</button>
+          {scheduledTime ? (
+              <button onClick={handleUnschedule}>Unschedule</button>
+            ) : (
+              <button onClick={() => setIsScheduling(true)}>Schedule</button>
+            )}
         </div>
       </div>
 
