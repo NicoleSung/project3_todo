@@ -78,7 +78,7 @@ h2 {
   border-radius: 6px;
   border: 1px solid #ccc;
   background-color: #fff;
-  width: 80px;
+  width: 90px;
 }
 
 /* Checkbox specific layout */
@@ -140,4 +140,46 @@ h2 {
   transform: translateY(0);
 }
 
+/* @media (max-width: 768px) {
+  .settings-panel {
+    width: 90%;
+    margin: 2rem auto;
+    padding: 1rem;
+    height: auto;
+  }
 
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .setting-item.row,
+  .setting-row.spaced {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .setting-item select {
+    width: 100%;
+  }
+
+  .account-info input,
+  .account-info button,
+  .settings-panel > button {
+    font-size: 1rem;
+    padding: 0.6rem;
+    width: 100%;
+  }
+
+  .checkbox-label {
+    gap: 0.75rem;
+  }
+
+  .status-message {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+}
+
+
+ */
