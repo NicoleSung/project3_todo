@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './settings.module.css';
+import './settings.css';
 
 export default function SettingsPanel() {
   const navigate = useNavigate();

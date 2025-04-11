@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './calendar.module.css';
+import './calendar.css';
 import dayjs from 'dayjs';
 import TaskDetailModal from './TaskDetailModal';
 import utc from 'dayjs/plugin/utc';
