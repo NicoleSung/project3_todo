@@ -2,6 +2,10 @@ const express = require('express');
 const dayjs = require('dayjs');
 const router = express.Router();
 const { db } = require('../db/db');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone.js')
+dayjs.extend(timezone);
+dayjs.extend(utc);
 
 // Get all tasks for logged-in user
 router.get('/tasks', (req, res) => {
@@ -139,7 +143,7 @@ router.put('/tasks/schedule/:id', (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
   const { id } = req.params;
-  const { scheduled_time, est_hour, est_min } = req.body;
+  const { scheduled_time, est_hour, est_min, timezone } = req.body;
 
   if (!scheduled_time || est_hour == null || est_min == null) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -148,12 +152,9 @@ router.put('/tasks/schedule/:id', (req, res) => {
   const hour = Number(est_hour);
   const minute = Number(est_min);
 
-  const start = dayjs(scheduled_time);
-  const end = start.add(hour, 'hour').add(minute, 'minute').toISOString();
-
-  if (start.isBefore(dayjs())) {
-    return res.status(400).json({ error: 'Scheduled time cannot be in the past' });
-  }
+  const start = dayjs.tz(scheduled_time, timezone);
+  const startUTC = start.utc().toISOString();
+  const endUTC = start.add(hour, 'hour').add(minute, 'minute').utc().toISOString();
 
   db.get('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [id, userId], (err, existingTask) => {
     if (err || !existingTask) {
@@ -164,7 +165,7 @@ router.put('/tasks/schedule/:id', (req, res) => {
                    SET scheduled_time = ?, end_time = ?
                    WHERE id = ? AND user_id = ?`;
 
-    const params = [scheduled_time, end, id, userId];
+   const params = [startUTC, endUTC, id, userId];
 
     db.run(query, params, function (err) {
       if (err) {
@@ -193,7 +194,7 @@ router.delete('/tasks/:id', (req, res) => {
 router.get('/tasks/suggest', (req, res) => {
   const userId = req.session.userId;
   const duration = parseInt(req.query.duration); // in minutes
-  const ignoreBreak = req.query.ignoreBreak === 'true'; // break buffer toggle
+  const ignoreBreak = req.query.ignoreBreak=== 'true'; // break buffer toggle
 
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!duration || duration <= 0) return res.status(400).json({ error: 'Invalid duration' });
@@ -204,25 +205,26 @@ router.get('/tasks/suggest', (req, res) => {
     (err, rows) => {
       if (err) return res.status(500).json({ error: 'Database error' });
 
-      const now = dayjs();
       const sorted = rows.map(r => ({
-        start: dayjs(r.scheduled_time),
-        end: dayjs(r.end_time)
+        start: dayjs.utc(r.scheduled_time), 
+        end: dayjs.utc(r.end_time)
       }));
 
-      let current = now;
+      let current = dayjs.utc();
       const breakBuffer = ignoreBreak ? 0 : 15; // break in minutes
 
       for (let i = 0; i <= sorted.length; i++) {
         const nextStart = sorted[i]?.start || null;
-        const gapEnd = nextStart || now.add(7, 'day');
+        const gapEnd = nextStart || current.add(7, 'day');
         const gapMinutes = gapEnd.diff(current, 'minute');
 
         if (gapMinutes >= (duration + breakBuffer)) {
-          return res.json({ suggested_time: current.toISOString() });
+          const suggestedTime = current.add(breakBuffer, 'minute');
+          const suggestedLocal = dayjs.utc(suggestedTime).local().format();
+          return res.json({ suggested_time: suggestedLocal});
         }
-        // Move pointer forward to the next task's end time (or keep moving)
-        current = sorted[i]?.end || current;
+
+        current = sorted[i]?.end;
       }
 
       return res.status(404).json({ error: 'No available slot found' });
@@ -240,7 +242,7 @@ router.post('/tasks/validate-time', (req, res) => {
   if (!scheduled_time || est_hour == null || est_min == null)
     return res.status(400).json({ error: 'Missing required fields' });
 
-  const proposedStart = dayjs(scheduled_time);
+  const proposedStart = dayjs(scheduled_time).utc();
   const proposedEnd = proposedStart.add(est_hour, 'hour').add(est_min, 'minute');
   const breakBuffer = ignoreBreak ? 0 : 15;
 

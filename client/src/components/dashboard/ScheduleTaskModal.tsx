@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import styles from './ScheduleModal.module.css';
 
+
 interface Props {
   task: {
     id: number;
@@ -57,7 +58,7 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
         scheduled_time: customTime,
         est_hour: task.est_hour,
         est_min: task.est_min,
-        ignoreBreak
+        ignoreBreak: ignoreBreak
       })
     });
     const data = await res.json();
@@ -73,19 +74,17 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
   };
 
   const confirmSchedule = async () => {
+    const LocalTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     await fetch(`/api/tasks/schedule/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        task_title: task.task_title,
-        task_details: task.task_details,
-        priority_lev: task.priority_lev,
         est_hour: task.est_hour,
         est_min: task.est_min,
-        due_dates: task.due_dates,
-        notification_yes: task.notification_yes,
-        scheduled_time: suggested
+        scheduled_time: suggested,
+        timezone: LocalTimeZone
       })
     });
 

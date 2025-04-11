@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import Modal from 'react-modal';
 import dayjs from 'dayjs';
 import styles from '../dashboard/TaskModal.module.css';
-
-Modal.setAppElement('#root');
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 
 interface Props {
   task: {
@@ -76,7 +76,7 @@ export default function TaskDetailModal({ task, onClose, onRefresh }: Props) {
         <label>Scheduled Start</label>
         <input
           type="datetime-local"
-          value={scheduledTime}
+          value={dayjs.utc(scheduledTime).local().format('YYYY-MM-DDTHH:mm')}
           onChange={(e) => setScheduledTime(e.target.value)}
         />
 

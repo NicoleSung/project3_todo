@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import TaskModal from './TaskModal';
 import ScheduleTaskModal from './ScheduleTaskModal';
 import styles from './TaskItem.module.css';
-import { FaClock, FaCalendarAlt, FaCalendarCheck } from 'react-icons/fa';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+
 
 interface Props {
   task: {
@@ -90,7 +93,7 @@ export default function TaskItem({ task, onTaskUpdated }: Props) {
             {task.scheduled_time && (
               <>
                 <span>•</span>
-                <span>Scheduled: {task.scheduled_time.replace('T', ' ').slice(0, 16)}</span>
+                <span>Scheduled: {dayjs.utc(scheduledTime).local().format('MMM D, h:mm A') .replace('T', ' ').slice(0, 16)}</span>
               </>
             )}
           </div>
