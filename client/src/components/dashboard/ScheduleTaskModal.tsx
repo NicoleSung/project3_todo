@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import styles from './ScheduleModal.module.css';
 
@@ -27,7 +27,7 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
   const [validationStatus, setValidationStatus] = useState('');
   const [validating, setValidating] = useState(false);
   const [isTimeValid, setIsTimeValid] = useState(false);
-
+  
   const fetchSuggestion = async () => {
     setLoading(true);
     setIsTimeValid(false);

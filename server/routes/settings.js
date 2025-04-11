@@ -28,4 +28,28 @@ router.put('/settings', (req, res) => {
   });
 });
 
+// get user's default view
+router.get('/settings/view', (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  db.get('SELECT default_view FROM users WHERE id = ?', [userId], (err, row) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!row) return res.status(404).json({ error: 'Settings and user not found' });
+    res.json(row);
+  });
+});
+
+// // get user's notification preference
+// router.get('/settings/notifications', (req, res) => {
+//   const userId = req.session.userId;
+//   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+//   db.get('SELECT notifications_enabled FROM users WHERE id = ?', [userId], (err, row) => {
+//     if (err) return res.status(500).json({ error: 'Database error' });
+//     if (!row) return res.status(404).json({ error: 'Settings and user not found' });
+//     res.json(row);
+//   });
+// });
+
 module.exports = router;

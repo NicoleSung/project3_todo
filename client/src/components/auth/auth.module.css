@@ -4,8 +4,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .login-container,
@@ -13,8 +15,10 @@ body {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .login-logo,
@@ -96,4 +100,32 @@ button {
 
 .link a:hover {
   text-decoration: underline;
+}
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+  .login-container,
+  .register-container {
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+  }
+
+  h1 {
+    font-size: 1.125rem;
+  }
+
+  .login-logo,
+  .register-logo {
+    font-size: 1.25rem;
+  }
+
+  .muted {
+    font-size: 0.95rem;
+  }
+
+  input,
+  button {
+    font-size: 0.95rem;
+    padding: 0.6rem;
+  }
 }
