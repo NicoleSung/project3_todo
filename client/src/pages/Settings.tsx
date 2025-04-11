@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../components/settings/settings.css';
+import '../components/settings/settings.module.css';
 
 export default function SettingsPanel() {
   const [defaultView, setDefaultView] = useState<'day' | 'week'>('day');
