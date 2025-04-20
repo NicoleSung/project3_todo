@@ -20,7 +20,9 @@ jobs:
 
     - name: Test SSH Connection
       run: |
-        ssh -i <(echo "${{ secrets.EC2_SSH_KEY }}") -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo 'SSH Connection Successful'"
+        echo "${{ secrets.EC2_SSH_KEY }}" > ssh_key.pem
+        chmod 600 ssh_key.pem
+        ssh -i ssh_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo 'SSH Connection Successful'"
 
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.0
