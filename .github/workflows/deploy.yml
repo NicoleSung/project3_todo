@@ -12,6 +12,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Debug SSH Variables
+      run: |
+        echo "Host: ${{ secrets.EC2_HOST }}"
+        echo "User: ${{ secrets.EC2_USER }}"
+        echo "Key Length: $(echo "${{ secrets.EC2_SSH_KEY }}" | wc -c)"
+
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.0
       with:
