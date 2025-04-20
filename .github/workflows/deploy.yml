@@ -1,0 +1,29 @@
+name: Deploy to EC2 from GitHub project3_todo
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ${{ secrets.EC2_PROJECT_DIR }}
+          git pull origin main
+          cd client
+          npm install
+          npm run build
+          cd ../server
+          npm install
+          pm2 restart todo-backend

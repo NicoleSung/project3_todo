@@ -6,12 +6,14 @@ const authRoutes = require('./routes/auth');
 const { initializeDatabase } = require('./db/db');
 const dashRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
-
 const app = express();
+
+app.set('trust proxy', true); // Trust the first proxy
 
 // Config
 const PORT = 3000;
 const SECRET = process.env.SESSION_SECRET || 'supersecret';
+
 
 // Middleware
 app.use(cors({
