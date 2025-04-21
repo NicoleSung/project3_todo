@@ -12,45 +12,30 @@
   height: 550px;
   overflow-y: auto;
 }
-  
-  .tasklist {
-    display: flex;
+
+@media (max-width: 768px) {
+  .dashboardPanel {
+    width: 100%;
+    margin: 1rem auto;
+    padding: 1rem;
+    height: auto;
+    border-radius: 0.75rem;
+  }
+
+  .headerrow {
     flex-direction: column;
+    align-items: flex-start;
     gap: 1rem;
   }
-  
-  .goldbutton {
-    background-color: #b48b2f;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    width: 130px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
-    box-shadow: none;
-    appearance: none;
-  }
-  
-  .goldbutton:hover {
-    background-color: #a07a29;
-  }
-  
-    
+
   h2 {
-    font-size: 1.8rem;
-    margin-bottom: 0rem;
-    border-bottom: 1px solid #eee;
+    font-size: 1.5rem;
   }
-  
-  .headerrow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+  .goldbutton {
+    width: 100%;
+    /* max-width: 80px; */
+    height: 40px;
+    font-size: 0.95rem;
   }
-  
+}

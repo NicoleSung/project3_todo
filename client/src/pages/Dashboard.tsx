@@ -24,10 +24,9 @@ export default function Dashboard() {
   return (
     <div className={styles.dashboardPanel}>
       <div className={styles.headerrow}>
+      <AddTaskButton onTaskUpdated={triggerRefresh} />
         <h2>Undone Tasks</h2>
-        <button className={styles.goldbutton}>
-          <AddTaskButton onTaskUpdated={triggerRefresh} />
-        </button>
+        
       </div>
       <div className={styles.tasklist}>
         {tasks.map(task => (

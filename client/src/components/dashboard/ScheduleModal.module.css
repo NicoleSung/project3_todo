@@ -49,30 +49,6 @@
     padding-bottom: 10px;
   }
   
-  .suggestion-closeButton {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    left: auto;
-    bottom: auto;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text);
-    padding: 0.25rem;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition), transform var(--transition);
-  }
-  
-  .suggestion-closeButton:hover {
-    color: var(--accent-hover);
-    transform: scale(1.1);  
-  }
-
   /* Main form section */
   .suggestion-form {
     display: flex;
@@ -149,5 +125,33 @@
   
   .suggestion-cancelButton:hover {
     background-color: #f8f8f8;
+  }
+  
+  @media (max-width: 600px) {
+    .suggestion-modal {
+      width: 95vw;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      max-height: 85vh;
+    }
+  
+    .suggestion-header h2 {
+      font-size: 1.2rem;
+    }
+  
+    .suggestion-closeButton {
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 1.2rem;
+    }
+  
+    .suggestion-form button {
+      width: 100%;
+    }
+  
+    .suggestion-actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
   }
   

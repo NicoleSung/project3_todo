@@ -101,7 +101,6 @@ export default function ScheduleTaskModal({ task, isOpen, onClose, onTaskUpdated
     >
       <div className={styles['suggestion-header']}>
         <h2>Schedule Suggestion</h2>
-        <button className={styles['suggestion-closeButton']} onClick={onClose}>×</button>
       </div>
 
       <div className={styles['suggestion-form']}>

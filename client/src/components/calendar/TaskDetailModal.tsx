@@ -63,7 +63,6 @@ export default function TaskDetailModal({ task, onClose, onRefresh }: Props) {
     >
       <div className={styles.header}>
         <h1>Edit Task</h1>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
       </div>
 
       <div className={styles.form}>

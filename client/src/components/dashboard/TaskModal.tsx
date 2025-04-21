@@ -61,10 +61,6 @@ export default function TaskModal({ isOpen, onClose, onTaskUpdated, task }: Prop
       className={styles.modal}
       overlayClassName={styles.overlay}
     >
-      <button className={styles.closeButton} onClick={onClose} aria-label="Close modal">
-        <FaTimes />
-      </button>
-
       <div className={styles.header}>
         <h1>{isEdit ? 'Edit Task' : 'Add Task'}</h1>
         

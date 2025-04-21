@@ -87,3 +87,38 @@
     background-color: var(--accent-hover);
   }
   
+  @media (max-width: 600px) {
+    .taskCard {
+      padding: 1rem;
+      border-radius: 0.75rem;
+    }
+  
+    .taskRow {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+  
+    .taskTitleRow {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+  
+    .taskActions {
+      flex-wrap: wrap;
+      width: 100%;
+      justify-content: flex-start;
+    }
+  
+    .taskActions button {
+      flex: 1 1 auto;
+      min-width: 100px;
+    }
+  
+    .meta {
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+  }
+  

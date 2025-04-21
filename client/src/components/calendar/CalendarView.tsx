@@ -72,16 +72,19 @@ export default function CalendarView() {
     <div className="calendar-container">
       <div className="calendar-header">
         <h2>Calendar</h2>
-        <div className="calendar-nav">
-          <button onClick={handlePrev}>&lt;</button>
-          <button onClick={() => setDate(dayjs())}>Today</button>
-          <button onClick={handleNext}>&gt;</button>
-        </div>
-        <div className="calendar-tabs">
-          <button onClick={() => setView('day')} className={view === 'day' ? 'active' : ''}>Day</button>
-          <button onClick={() => setView('week')} className={view === 'week' ? 'active' : ''}>Week</button>
+        <div className="calendar-controls">
+          <div className="calendar-nav">
+            <button onClick={handlePrev}>&lt;</button>
+            <button onClick={() => setDate(dayjs())}>Today</button>
+            <button onClick={handleNext}>&gt;</button>
+          </div>
+          <div className="calendar-tabs">
+            <button onClick={() => setView('day')} className={view === 'day' ? 'active' : ''}>Day</button>
+            <button onClick={() => setView('week')} className={view === 'week' ? 'active' : ''}>Week</button>
+          </div>
         </div>
       </div>
+
 
       {view === 'day' && (
         <>

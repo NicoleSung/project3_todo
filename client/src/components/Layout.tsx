@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { FaHome, FaCalendarAlt, FaCog, FaCheck, FaMobile} from 'react-icons/fa';
+import { FaHome, FaCalendarAlt, FaCog, FaBars  } from 'react-icons/fa';
 
 export default function DashboardLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="layout-container">
-      <aside className="sidebar">
-      <div className="dashboard-logo">
+      <button id="sidebarToggle" onClick={toggleSidebar}>
+      <FaBars size={20} color="#fff" />
+      </button>
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="dashboard-logo">
           <svg
             fill="currentColor"
             viewBox="0 0 24 24"
@@ -29,19 +39,19 @@ export default function DashboardLayout() {
         <nav>
           <ul>
             <li>
-              <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
+              <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <FaHome className="icon" />
                 Dashboard
               </NavLink>
             </li>
             <li>
-              <NavLink to="/calendar" className={({ isActive }) => isActive ? 'active' : ''}>
+              <NavLink to="/calendar" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <FaCalendarAlt className="icon" />
                 Calendar
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings" className={({ isActive }) => isActive ? 'active' : ''}>
+              <NavLink to="/settings" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <FaCog className="icon" />
                 Settings
               </NavLink>
@@ -49,10 +59,10 @@ export default function DashboardLayout() {
           </ul>
         </nav>
       </aside>
+
       <main className="main-content">
         <Outlet />
       </main>
     </div>
-    
   );
 }

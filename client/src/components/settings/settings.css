@@ -139,3 +139,47 @@ h2 {
   opacity: 1;
   transform: translateY(0);
 }
+
+@media (max-width: 600px) {
+  .settings-panel {
+    width: 95vw;
+    margin: 1rem auto;
+    padding: 1rem;
+    height: auto;
+    gap: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .setting-item.row,
+  .setting-row.spaced {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .setting-item select {
+    width: 100%;
+  }
+
+  .account-info button,
+  .settings-panel > button {
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  .account-info input {
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .checkbox-label {
+    font-size: 0.95rem;
+  }
+
+  .status-message {
+    font-size: 0.9rem;
+  }
+}
