@@ -21,6 +21,27 @@ CREATE TABLE IF NOT EXISTS tasks (
     scheduled_time TEXT DEFAULT NULL,
     end_time TEXT DEFAULT NULL,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    -- time-stamped data
+
+    -- note existence
+    note_creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    creation_timezone TEXT DEFAULT NULL,
+    note_deletion_time TIMESTAMP DEFAULT NULL,
+    deletion_location TEXT DEFAULT NULL,
+    
+    -- derived: time between note creation and deletion, in minutes
+    note_life INTEGER GENERATED ALWAYS AS (
+        CASE
+            WHEN note_deletion_time IS NOT NULL AND note_creation_time IS NOT NULL
+            THEN CAST((julianday(note_deletion_time) - julianday(note_creation_time)) * 24 * 60 AS INTEGER)
+            ELSE NULL
+        END
+    ) VIRTUAL,
+
+    active_note BOOLEAN DEFAULT 0,
+
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
