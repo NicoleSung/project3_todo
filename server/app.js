@@ -8,7 +8,7 @@ const dashRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
 const app = express();
 
-app.set('trust proxy', true); // Trust the first proxy
+app.set('trust proxy', 1); // Trust the first proxy
 
 // Config
 const PORT = 3000;
