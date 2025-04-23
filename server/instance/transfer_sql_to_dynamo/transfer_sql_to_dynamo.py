@@ -7,11 +7,21 @@ Data Created: 23 April, 2025
 
 import sqlite3
 import boto3
+import argparse
+import os
 from decimal import Decimal
 
 def main():
+    parser = argparse.ArgumentParser(description="Transfer data from SQLite to DynamoDB")
+    parser.add_argument('-db', type=str, required=True, help="Path to the SQLite database file")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.db): 
+        print(f"Database file {args.db} does not exist.")
+        exit(1)
+
     # Connect to SQLite
-    conn = sqlite3.connect('new_schema.db')
+    conn = sqlite3.connect(args.db)
     cursor = conn.cursor()
 
     # Connect to DynamoDB
