@@ -25,7 +25,8 @@ def main():
     cursor = conn.cursor()
 
     # Connect to DynamoDB
-    dynamodb = boto3.resource('dynamodb')
+    session = boto3.Session(region_name='us-east-1')
+    dynamodb = session.resource('dynamodb')
     users_table = dynamodb.Table('Users')
     tasks_table = dynamodb.Table('Tasks')
 
