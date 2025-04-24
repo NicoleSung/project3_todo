@@ -9,12 +9,26 @@ export default function Dashboard() {
 
   const triggerRefresh = () => setRefresh(prev => !prev);
 
+  // const fetchTasks = async () => {
+  //   const res = await fetch('/api/tasks', {
+  //     credentials: 'include'
+  //   });
+  //   const data = await res.json();
+  //   setTasks(data);
+  // };
+
   const fetchTasks = async () => {
     const res = await fetch('/api/tasks', {
       credentials: 'include'
     });
     const data = await res.json();
-    setTasks(data);
+
+    // Only show active tasks
+    const activeTasks = data.filter(task =>
+      task.active_note === true || task.active_note === 1
+    );
+
+    setTasks(activeTasks);
   };
 
   useEffect(() => {
