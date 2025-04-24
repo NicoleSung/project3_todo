@@ -3,7 +3,7 @@ const path = require('path');
 const session = require('express-session');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
-const { initializeDatabase } = require('./db/db');
+// const { initializeDatabase } = require('./db/db');
 const dashRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
 const app = express();
@@ -29,7 +29,7 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-initializeDatabase();
+// initializeDatabase();
 
 // Mount routes
 app.use('/api/auth', authRoutes);
