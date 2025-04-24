@@ -330,6 +330,8 @@
 
 // -------------------------- MODIFIED CODE FOR DYNAMO DB -------------------------- //
 
+// Enhanced DynamoDB-backed Express router with detailed try/catch debugging
+
 const express = require('express');
 const AWS = require('aws-sdk');
 const dayjs = require('dayjs');
@@ -344,6 +346,12 @@ dayjs.extend(timezone);
 const dynamo = new AWS.DynamoDB.DocumentClient({ region: 'us-east-1' });
 const TASKS_TABLE = 'Tasks';
 
+// Helper to send error responses with details
+function handleError(res, context, err) {
+  console.error(`[${context}]`, err);
+  res.status(500).json({ error: `${context} failed`, details: err.message });
+}
+
 // Get all tasks for logged-in user
 router.get('/tasks', async (req, res) => {
   const userId = req.session.userId;
@@ -354,33 +362,20 @@ router.get('/tasks', async (req, res) => {
       TableName: TASKS_TABLE,
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
-      ExpressionAttributeValues: {
-        ':uid': userId
-      }
+      ExpressionAttributeValues: { ':uid': userId }
     }).promise();
-
     res.json(result.Items);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'DynamoDB query failed' });
+    handleError(res, 'Query tasks', err);
   }
 });
 
-// Create task
+// Create a new task
 router.post('/tasks', async (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-  const {
-    task_title,
-    task_details,
-    priority_lev,
-    est_hour,
-    est_min,
-    due_dates,
-    notification_yes
-  } = req.body;
-
+  const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -403,90 +398,76 @@ router.post('/tasks', async (req, res) => {
     await dynamo.put({ TableName: TASKS_TABLE, Item: task }).promise();
     res.status(201).json({ message: 'Task created', task });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to insert task' });
+    handleError(res, 'Create task', err);
   }
 });
 
-// Update task
+// Update an existing task and clear schedule
 router.put('/tasks/:id', async (req, res) => {
   const userId = req.session.userId;
   const { id } = req.params;
-  const {
-    task_title,
-    task_details,
-    priority_lev,
-    est_hour,
-    est_min,
-    due_dates,
-    notification_yes
-  } = req.body;
+  const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
 
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const values = {
+    ':title': task_title,
+    ':details': task_details,
+    ':priority': priority_lev,
+    ':hour': est_hour,
+    ':min': est_min,
+    ':due': due_dates,
+    ':notify': notification_yes,
+    ':sched': null,
+    ':end': null
+  };
+
   try {
     await dynamo.update({
       TableName: TASKS_TABLE,
       Key: { id },
-      UpdateExpression: `SET task_title = :title, task_details = :details, priority_lev = :priority, est_hour = :hour, est_min = :min, due_dates = :due, notification_yes = :notify` +
-        `, scheduled_time = :sched, end_time = :end` ,
-      ExpressionAttributeValues: {
-        ':title': task_title,
-        ':details': task_details,
-        ':priority': priority_lev,
-        ':hour': est_hour,
-        ':min': est_min,
-        ':due': due_dates,
-        ':notify': notification_yes,
-        ':sched': null,
-        ':end': null
-      }
+      UpdateExpression:
+        'SET task_title = :title, task_details = :details, priority_lev = :priority, est_hour = :hour, est_min = :min, due_dates = :due, notification_yes = :notify, scheduled_time = :sched, end_time = :end',
+      ExpressionAttributeValues: values
     }).promise();
-
     res.json({ message: 'Task updated and schedule cleared' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Update failed' });
+    handleError(res, 'Update task', err);
   }
 });
 
-// Schedule task
+// Schedule a task
 router.put('/tasks/schedule/:id', async (req, res) => {
   const userId = req.session.userId;
   const { id } = req.params;
-  const { scheduled_time, est_hour, est_min, timezone } = req.body;
-
+  const { scheduled_time, est_hour, est_min, timezone: tz } = req.body;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!scheduled_time || est_hour == null || est_min == null) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const start = dayjs.tz(scheduled_time, timezone);
-  const startUTC = start.utc().toISOString();
-  const endUTC = start.add(est_hour, 'hour').add(est_min, 'minute').utc().toISOString();
-
   try {
-    await dynamo.update({
+    const start = dayjs.tz(scheduled_time, tz);
+    const update = {
       TableName: TASKS_TABLE,
       Key: { id },
       UpdateExpression: 'SET scheduled_time = :start, end_time = :end',
       ExpressionAttributeValues: {
-        ':start': startUTC,
-        ':end': endUTC
+        ':start': start.utc().toISOString(),
+        ':end': start.add(est_hour, 'hour').add(est_min, 'minute').utc().toISOString()
       }
-    }).promise();
-
+    };
+    await dynamo.update(update).promise();
     res.json({ message: 'Task scheduled successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update schedule' });
+    handleError(res, 'Schedule task', err);
   }
 });
 
-// Unassign scheduled time
+// Unschedule a task
 router.put('/tasks/unschedule/:id', async (req, res) => {
   const userId = req.session.userId;
   const { id } = req.params;
@@ -498,60 +479,55 @@ router.put('/tasks/unschedule/:id', async (req, res) => {
       Key: { id },
       UpdateExpression: 'REMOVE scheduled_time, end_time'
     }).promise();
-
     res.json({ message: 'Task unscheduled' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to unschedule task' });
+    handleError(res, 'Unschedule task', err);
   }
 });
 
-// Calendar edit task
-router.put('/tasks/calendarEdit/:id', async (req, res) => {
+// Delete task: mark inactive and compute note_life
+router.delete('/tasks/:id', async (req, res) => {
   const userId = req.session.userId;
   const { id } = req.params;
-  const { task_title, task_details, scheduled_time, est_hour, est_min } = req.body;
-
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-  if (!scheduled_time || est_hour == null || est_min == null) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const start = dayjs(scheduled_time);
-  const end = start.add(est_hour, 'hour').add(est_min, 'minute').toISOString();
 
   try {
+    const { Item: task } = await dynamo.get({ TableName: TASKS_TABLE, Key: { id } }).promise();
+    if (!task || task.user_id !== userId) return res.status(404).json({ error: 'Task not found' });
+
+    if (!task.note_creation_time) {
+      return res.status(400).json({ error: 'Missing note_creation_time' });
+    }
+
+    const now = dayjs();
+    const noteLife = now.diff(dayjs(task.note_creation_time), 'minute');
     await dynamo.update({
       TableName: TASKS_TABLE,
       Key: { id },
-      UpdateExpression: 'SET task_title = :title, task_details = :details, scheduled_time = :start, end_time = :end',
+      UpdateExpression: 'SET active_note = :a, note_deletion_time = :d, note_life = :l',
       ExpressionAttributeValues: {
-        ':title': task_title,
-        ':details': task_details,
-        ':start': start.toISOString(),
-        ':end': end
+        ':a': false,
+        ':d': now.toISOString(),
+        ':l': noteLife
       }
     }).promise();
-
-    res.json({ message: 'Task updated from calendar' });
+    res.json({ message: 'Task deleted and note_life recorded' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update calendar info' });
+    handleError(res, 'Delete task', err);
   }
 });
 
-// Suggest the next available time slot
+// Suggest next available time slot
 router.get('/tasks/suggest', async (req, res) => {
   const userId = req.session.userId;
-  const duration = parseInt(req.query.duration);
+  const duration = parseInt(req.query.duration, 10);
   const ignoreBreak = req.query.ignoreBreak === 'true';
   const breakBuffer = ignoreBreak ? 0 : 15;
-
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!duration || duration <= 0) return res.status(400).json({ error: 'Invalid duration' });
 
   try {
-    const result = await dynamo.query({
+    const { Items } = await dynamo.query({
       TableName: TASKS_TABLE,
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
@@ -559,39 +535,30 @@ router.get('/tasks/suggest', async (req, res) => {
       ExpressionAttributeValues: { ':uid': userId }
     }).promise();
 
-    const sorted = result.Items.map(t => ({
-      start: dayjs.utc(t.scheduled_time),
-      end: dayjs.utc(t.end_time)
-    })).sort((a, b) => a.start - b.start);
+    const sorted = Items.map(t => ({ start: dayjs.utc(t.scheduled_time), end: dayjs.utc(t.end_time) }))
+      .sort((a, b) => a.start - b.start);
 
     let current = dayjs.utc();
     for (let i = 0; i <= sorted.length; i++) {
-      const nextStart = sorted[i]?.start || null;
+      const nextStart = sorted[i]?.start;
       const gapEnd = nextStart || current.add(7, 'day');
-      const gapMinutes = gapEnd.diff(current, 'minute');
-
-      if (gapMinutes >= (duration + breakBuffer)) {
-        const suggestedTime = current.add(breakBuffer, 'minute');
-        const suggestedLocal = dayjs.utc(suggestedTime).local().format();
-        return res.json({ suggested_time: suggestedLocal });
+      if (gapEnd.diff(current, 'minute') >= duration + breakBuffer) {
+        const suggested = current.add(breakBuffer, 'minute');
+        return res.json({ suggested_time: dayjs.utc(suggested).local().format() });
       }
-
       current = sorted[i]?.end;
     }
-
     res.status(404).json({ error: 'No available slot found' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to suggest time' });
+    handleError(res, 'Suggest time', err);
   }
 });
 
-// Validate custom schedule time against existing tasks
+// Validate custom schedule time
 router.post('/tasks/validate-time', async (req, res) => {
   const userId = req.session.userId;
   const { scheduled_time, est_hour, est_min, ignoreBreak } = req.body;
   const breakBuffer = ignoreBreak === true ? 0 : 15;
-
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
   if (!scheduled_time || est_hour == null || est_min == null) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -599,13 +566,12 @@ router.post('/tasks/validate-time', async (req, res) => {
 
   const proposedStart = dayjs(scheduled_time).utc();
   const proposedEnd = proposedStart.add(est_hour, 'hour').add(est_min, 'minute');
-
   if (proposedStart.isBefore(dayjs())) {
     return res.status(400).json({ error: 'Scheduled time cannot be in the past' });
   }
 
   try {
-    const result = await dynamo.query({
+    const { Items } = await dynamo.query({
       TableName: TASKS_TABLE,
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
@@ -613,25 +579,19 @@ router.post('/tasks/validate-time', async (req, res) => {
       ExpressionAttributeValues: { ':uid': userId }
     }).promise();
 
-    const conflicts = result.Items.filter(row => {
-      const existingStart = dayjs(row.scheduled_time);
-      const existingEnd = dayjs(row.end_time);
-
-      const bufferedStart = existingStart.subtract(breakBuffer, 'minute');
-      const bufferedEnd = existingEnd.add(breakBuffer, 'minute');
-
-      return proposedEnd.isAfter(bufferedStart) && proposedStart.isBefore(bufferedEnd);
+    const conflicts = Items.filter(row => {
+      const start = dayjs(row.scheduled_time);
+      const end = dayjs(row.end_time);
+      return proposedEnd.isAfter(start.subtract(breakBuffer, 'minute')) && proposedStart.isBefore(end.add(breakBuffer, 'minute'));
     });
-
-    if (conflicts.length > 0) {
-      return res.status(409).json({ error: 'Time conflict with existing task', conflicts });
+    if (conflicts.length) {
+      return res.status(409).json({ error: 'Time conflict', conflicts });
     }
-
     res.json({ message: 'Time slot is available' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Conflict check failed' });
+    handleError(res, 'Validate time', err);
   }
 });
 
 module.exports = router;
+// -------------------------- END OF MODIFIED CODE -------------------------- //
