@@ -18,7 +18,7 @@ function handleError(res, context, err) {
   res.status(500).json({ error: `${context} failed`, details: err.message });
 }
 
-// Get all tasks for logged-in user
+// Get all active tasks for logged-in user
 router.get('/tasks', async (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -28,11 +28,15 @@ router.get('/tasks', async (req, res) => {
       TableName: TASKS_TABLE,
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
-      ExpressionAttributeValues: { ':uid': userId }
+      FilterExpression: 'active_note = :active',
+      ExpressionAttributeValues: {
+        ':uid': String(userId),
+        ':active': true
+      }
     }).promise();
     res.json(result.Items);
   } catch (err) {
-    handleError(res, 'Query tasks', err);
+    handleError(res, 'Query active tasks', err);
   }
 });
 
@@ -198,7 +202,7 @@ router.get('/tasks/suggest', async (req, res) => {
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
       FilterExpression: 'attribute_exists(scheduled_time)',
-      ExpressionAttributeValues: { ':uid': userId }
+      ExpressionAttributeValues: { ':uid': String(userId) }
     }).promise();
 
     const sorted = Items.map(t => ({ start: dayjs.utc(t.scheduled_time), end: dayjs.utc(t.end_time) }))
@@ -242,7 +246,7 @@ router.post('/tasks/validate-time', async (req, res) => {
       IndexName: 'user_id_index',
       KeyConditionExpression: 'user_id = :uid',
       FilterExpression: 'attribute_exists(scheduled_time)',
-      ExpressionAttributeValues: { ':uid': userId }
+      ExpressionAttributeValues: { ':uid': String(userId) }
     }).promise();
 
     const conflicts = Items.filter(row => {
@@ -260,4 +264,3 @@ router.post('/tasks/validate-time', async (req, res) => {
 });
 
 module.exports = router;
-// -------------------------- END OF MODIFIED CODE -------------------------- //
