@@ -83,16 +83,17 @@ export default function Register() {
     username: '',
     password: '',
   });
-
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
-  // Real-time password checks
+  // Live password‐requirement checks
   const isLongEnough = form.password.length >= 8;
   const hasUppercase = /[A-Z]/.test(form.password);
   const hasLowercase = /[a-z]/.test(form.password);
   const hasNumber = /[0-9]/.test(form.password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
+  const allValid =
+    isLongEnough && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -100,21 +101,30 @@ export default function Register() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(''); // clear previous error
 
     UserPool.signUp(form.username, form.password, [], null, (err, data) => {
       if (err) {
-        console.error('Registration error:', err);
+        console.error('[Register]', err);
 
-        if (err.code === 'InvalidPasswordException') {
-          setError('Password must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.');
+        // Show friendly helper if password fails policy
+        if (
+          err.code === 'InvalidPasswordException' ||
+          (typeof err.message === 'string' &&
+            err.message.toLowerCase().includes('password did not conform'))
+        ) {
+          setError(
+            'Password must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.'
+          );
         } else {
+          // fallback to whatever Cognito gave us
           setError(err.message || 'Registration failed');
         }
-
-      } else {
-        console.log('Registration success', data);
-        navigate('/login');
+        return;
       }
+
+      console.log('Registration success', data);
+      navigate('/login');
     });
   };
 
@@ -150,6 +160,7 @@ export default function Register() {
           type="text"
           placeholder="mail@example.com"
           required
+          value={form.username}
           onChange={handleChange}
         />
 
@@ -158,10 +169,11 @@ export default function Register() {
           name="password"
           type="password"
           required
+          value={form.password}
           onChange={handleChange}
         />
 
-        {/* Password live validation */}
+        {/* Live password requirements */}
         <div className={styles['password-requirements']}>
           <ul>
             <li style={{ color: isLongEnough ? 'green' : 'red' }}>
@@ -182,7 +194,9 @@ export default function Register() {
           </ul>
         </div>
 
-        <button type="submit">Register</button>
+        <button type="submit" disabled={!allValid}>
+          Register
+        </button>
       </form>
 
       <div className={styles.link}>
