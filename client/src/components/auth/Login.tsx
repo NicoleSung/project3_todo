@@ -86,7 +86,6 @@
 //   );
 // }
 
-
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './auth.module.css';
@@ -119,18 +118,18 @@ export default function Login() {
     user.authenticateUser(authDetails, {
       onSuccess: (session) => {
         console.log('Login successful!');
-        console.log('Access token:', session.getAccessToken().getJwtToken());
+        const token = session.getAccessToken().getJwtToken();
+        console.log('Access token:', token);
 
-        // Optionally save token to localStorage
-        localStorage.setItem('accessToken', session.getAccessToken().getJwtToken());
+        // Store the token so it can be sent in Authorization headers
+        localStorage.setItem('accessToken', token);
 
-        // Fetch dashboard data after successful login
+        // Call protected route to verify backend access
         const fetchDashboardData = async () => {
           try {
             const res = await apiFetch('/api/dashboard');
             const data = await res.json();
             console.log('Dashboard data:', data);
-            // Handle dashboard data here, e.g., update state
           } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
             setError('Failed to fetch dashboard data.');
@@ -138,7 +137,7 @@ export default function Login() {
         };
 
         fetchDashboardData();
-        
+
         navigate('/dashboard');
       },
       onFailure: (err) => {
@@ -150,7 +149,6 @@ export default function Login() {
 
   return (
     <div className={styles['login-container']}>
-      {/* unchanged visual stuff */}
       <div className={styles['login-logo']}>
         <svg fill="currentColor" viewBox="0 0 24 24">
           <path
