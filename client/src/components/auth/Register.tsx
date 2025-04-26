@@ -29,7 +29,9 @@ export default function Register() {
 
     UserPool.signUp(form.username, form.password, [], null, (err, data) => {
       if (err) {
-        console.error('[Register]', err);
+        console.log('!!! SIGNUP CALLBACK - ERROR BLOCK ENTERED !!!'); 
+        console.error('[Register] Error Object:', err); // Log the full error object
+
 
         // Show friendly helper if password fails policy
         if (
