@@ -108,7 +108,6 @@ export default function Confirm() {
   const navigate = useNavigate();
   const location = useLocation<LocationState>();
 
-  // Initialize username from location.state if available
   const [form, setForm] = useState<{ username: string; code: string }>({
     username: location.state?.username || '',
     code: '',
@@ -116,7 +115,6 @@ export default function Confirm() {
   const [error, setError] = useState<string>('');
   const [info, setInfo] = useState<string>('');
 
-  // Keep form.username in sync if location.state changes
   useEffect(() => {
     if (location.state?.username) {
       setForm(f => ({ ...f, username: location.state!.username! }));
@@ -143,7 +141,11 @@ export default function Confirm() {
         setError(err.message || 'Confirmation failed.');
       } else {
         console.log('User confirmed successfully', data);
-        navigate('/login');
+        setInfo('Account confirmed! Redirecting to login...');
+        // Auto-redirect to login after 2 seconds
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       }
     });
   };
@@ -203,10 +205,9 @@ export default function Confirm() {
         <input
           name="username"
           type="text"
-          placeholder="mail@example.com"
           required
           value={form.username}
-          onChange={handleChange}
+          readOnly
         />
 
         <label>Confirmation Code</label>
@@ -228,7 +229,14 @@ export default function Confirm() {
         <button
           type="button"
           onClick={handleResend}
-          style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', padding: 0 }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007bff',
+            cursor: 'pointer',
+            padding: 0,
+            marginTop: '10px'
+          }}
         >
           Resend code?
         </button>

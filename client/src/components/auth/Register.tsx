@@ -17,8 +17,7 @@ export default function Register() {
   const hasLowercase = /[a-z]/.test(form.password);
   const hasNumber = /[0-9]/.test(form.password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
-  const allValid =
-    isLongEnough && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+  const allValid = isLongEnough && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
