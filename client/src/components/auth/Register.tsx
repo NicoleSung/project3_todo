@@ -113,7 +113,6 @@ export default function Register() {
 
   return (
     <div className={styles['register-container']}>
-      {/* unchanged visual stuff */}
       <div className={styles['register-logo']}>
         <svg fill="currentColor" viewBox="0 0 24 24">
           <path
