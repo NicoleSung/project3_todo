@@ -3,7 +3,6 @@ const jwksRsa = require('jwks-rsa');
 
 const REGION = 'us-east-1'; // your AWS region
 const USER_POOL_ID = 'us-east-1_QQ0vo4TRv';
-// const CLIENT_ID = '3g6mpmbhvs83kue3cqq1q04nuc';
 const CLIENT_ID = '2j7j8tflnfc41ns06v2eds46fl';
 
 const authenticate = jwt({

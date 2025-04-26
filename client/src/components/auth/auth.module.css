@@ -129,3 +129,8 @@ button {
     padding: 0.6rem;
   }
 }
+
+.password-requirements {
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
