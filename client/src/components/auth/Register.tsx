@@ -24,6 +24,7 @@ export default function Register() {
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    console.log('handleSubmit called'); // Check if the function is triggered
     e.preventDefault();
     setError(''); // clear previous error
 
