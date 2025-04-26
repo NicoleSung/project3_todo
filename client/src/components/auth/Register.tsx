@@ -56,6 +56,8 @@ export default function Register() {
     });
   };
 
+  console.log('Rendering Register component, allValid:', allValid); // Log the value of allValid to check if it's being calculated correctly
+
   return (
     <div className={styles['register-container']}>
       <div className={styles['register-logo']}>
@@ -101,7 +103,9 @@ export default function Register() {
           onChange={handleChange}
         />
 
-        <button type="submit" disabled={!allValid}>
+        <button type="submit" 
+        // disabled={!allValid}
+        >
           Register
         </button>
       </form>
