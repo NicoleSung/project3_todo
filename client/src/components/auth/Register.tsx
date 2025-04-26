@@ -82,7 +82,7 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './auth.module.css';
-import UserPool from '../../awsConfig'; // <-- import config
+import UserPool from '../../awsConfig';
 
 export default function Register() {
   const [form, setForm] = useState<{ username: string; password: string }>({
