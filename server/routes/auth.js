@@ -220,44 +220,152 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 // — WHO AM I? —
+// router.get('/me', async (req, res) => {
+//   const token = req.headers.authorization?.split(' ')[1];
+//   if (!token) {
+//     return res.status(401).json({ authenticated: false, error: 'No token provided.' });
+//   }
+
+//   try {
+//     const decoded = jwt.decode(token, { complete: true });
+//     if (!decoded) throw new Error('Invalid token');
+
+//     const jwks = jwksRsa({
+//       jwksUri: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json`
+//     });
+
+//     const getKey = (header, callback) =>
+//       jwks.getSigningKey(header.kid, (err, key) => callback(null, key.getPublicKey()));
+
+//     jwt.verify(
+//       token,
+//       getKey,
+//       {
+//         audience: CLIENT_ID,
+//         issuer: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
+//         algorithms: ['RS256'],
+//       },
+//       (err, payload) => {
+//         if (err) {
+//           console.error('JWT verify error:', err);
+//           return res.status(401).json({ authenticated: false });
+//         }
+//         res.json({ authenticated: true, user: payload });
+//       }
+//     );
+//   } catch (err) {
+//     console.error('[WhoAmI]', err);
+//     return res.status(401).json({ authenticated: false });
+//   }
+// });
+
+
+// — WHO AM I? —
 router.get('/me', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  // Extract token from Authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      authenticated: false, 
+      error: 'Authorization header missing or malformed' 
+    });
+  }
+  
+  const token = authHeader.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ authenticated: false, error: 'No token provided.' });
+    return res.status(401).json({ 
+      authenticated: false, 
+      error: 'No token provided' 
+    });
   }
 
   try {
+    // First decode to check basic structure before verification
     const decoded = jwt.decode(token, { complete: true });
-    if (!decoded) throw new Error('Invalid token');
+    if (!decoded) {
+      return res.status(401).json({ 
+        authenticated: false, 
+        error: 'Invalid token format' 
+      });
+    }
 
-    const jwks = jwksRsa({
-      jwksUri: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json`
+    // Set up JWKS client for key retrieval
+    const jwksClient = jwksRsa({
+      jwksUri: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json`,
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5
     });
 
-    const getKey = (header, callback) =>
-      jwks.getSigningKey(header.kid, (err, key) => callback(null, key.getPublicKey()));
+    // Function to get the signing key
+    const getKey = (header, callback) => {
+      jwksClient.getSigningKey(header.kid, (err, key) => {
+        if (err) {
+          console.error('Failed to retrieve signing key:', err);
+          return callback(err);
+        }
+        
+        const signingKey = key.getPublicKey();
+        callback(null, signingKey);
+      });
+    };
 
+    // Verify token with appropriate options
     jwt.verify(
       token,
       getKey,
       {
-        audience: CLIENT_ID,
+        // For ID tokens, verify audience
+        ...(decoded.payload.token_use === 'id' && { audience: CLIENT_ID }),
+        // For access tokens, skip audience check (they use 'client_id' differently)
         issuer: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
-        algorithms: ['RS256'],
+        algorithms: ['RS256']
       },
       (err, payload) => {
         if (err) {
-          console.error('JWT verify error:', err);
-          return res.status(401).json({ authenticated: false });
+          console.error('Token verification failed:', err.name, err.message);
+          
+          // Return specific error based on verification failure
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+              authenticated: false, 
+              error: 'Token expired' 
+            });
+          } else if (err.name === 'JsonWebTokenError') {
+            return res.status(401).json({ 
+              authenticated: false, 
+              error: 'Invalid token' 
+            });
+          } else {
+            return res.status(401).json({ 
+              authenticated: false, 
+              error: 'Token verification failed' 
+            });
+          }
         }
-        res.json({ authenticated: true, user: payload });
+        
+        // Token is valid, return user info
+        return res.json({ 
+          authenticated: true, 
+          user: {
+            sub: payload.sub,
+            email: payload.email,
+            username: payload['cognito:username'],
+            // Don't include sensitive claims
+          }
+        });
       }
     );
   } catch (err) {
-    console.error('[WhoAmI]', err);
-    return res.status(401).json({ authenticated: false });
+    console.error('Unexpected error during authentication:', err);
+    return res.status(500).json({ 
+      authenticated: false, 
+      error: 'Authentication service error' 
+    });
   }
 });
+
+
 
 // — LOGOUT —
 router.post('/logout', (req, res) => {
