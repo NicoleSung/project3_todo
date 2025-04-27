@@ -118,7 +118,9 @@ export default function Register() {
         </button>
       </form>
 
-      <button onClick={() => console.log('SIMPLE BUTTON CLICKED')}>Test Click Me</button>
+      <div>
+        <button onClick={() => console.log('SIMPLE BUTTON CLICKED')}>Test Click Me</button>
+      </div>
 
       <div className={styles.link}>
         Already have an account? <a href="/login">Login here</a>
