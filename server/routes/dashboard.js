@@ -18,10 +18,105 @@ function handleError(res, context, err) {
   res.status(500).json({ error: `${context} failed`, details: err.message });
 }
 
-// Get all active tasks for logged-in user
+// // Get all active tasks for logged-in user
+// router.get('/tasks', async (req, res) => {
+//   const userId = req.session.userId;
+//   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+//   try {
+//     const result = await dynamo.query({
+//       TableName: TASKS_TABLE,
+//       IndexName: 'user_id_index',
+//       KeyConditionExpression: 'user_id = :uid',
+//       FilterExpression: 'active_note = :active',
+//       ExpressionAttributeValues: {
+//         ':uid': String(userId),
+//         ':active': true
+//       }
+//     }).promise();
+//     res.json(result.Items);
+//   } catch (err) {
+//     handleError(res, 'Query active tasks', err);
+//   }
+// });
+
+// // Create a new task
+// router.post('/tasks', async (req, res) => {
+//   const userId = req.session.userId;
+//   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+//   const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
+//   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
+//     return res.status(400).json({ error: 'Missing required fields' });
+//   }
+
+//   const task = {
+//     id: uuidv4(),
+//     user_id: userId,
+//     task_title,
+//     task_details,
+//     priority_lev,
+//     est_hour,
+//     est_min,
+//     due_dates,
+//     notification_yes,
+//     note_creation_time: dayjs().toISOString(),
+//     active_note: true
+//   };
+
+//   try {
+//     await dynamo.put({ TableName: TASKS_TABLE, Item: task }).promise();
+//     res.status(201).json({ message: 'Task created', task });
+//   } catch (err) {
+//     handleError(res, 'Create task', err);
+//   }
+// });
+
+// // Update an existing task and clear schedule
+// router.put('/tasks/:id', async (req, res) => {
+//   const userId = req.session.userId;
+//   const { id } = req.params;
+//   const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
+
+//   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+//   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
+//     return res.status(400).json({ error: 'Missing required fields' });
+//   }
+
+//   const values = {
+//     ':title': task_title,
+//     ':details': task_details,
+//     ':priority': priority_lev,
+//     ':hour': est_hour,
+//     ':min': est_min,
+//     ':due': due_dates,
+//     ':notify': notification_yes,
+//     ':sched': null,
+//     ':end': null
+//   };
+
+//   try {
+//     await dynamo.update({
+//       TableName: TASKS_TABLE,
+//       Key: { id },
+//       UpdateExpression:
+//         'SET task_title = :title, task_details = :details, priority_lev = :priority, est_hour = :hour, est_min = :min, due_dates = :due, notification_yes = :notify, scheduled_time = :sched, end_time = :end',
+//       ExpressionAttributeValues: values
+//     }).promise();
+//     res.json({ message: 'Task updated and schedule cleared' });
+//   } catch (err) {
+//     handleError(res, 'Update task', err);
+//   }
+// });
+
+
+// GET all active tasks for logged‑in user
 router.get('/tasks', async (req, res) => {
-  const userId = req.session.userId;
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  // express-jwt puts the validated token payload on req.auth
+  const userId = req.auth?.sub;
+  if (!userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
   try {
     const result = await dynamo.query({
@@ -30,22 +125,34 @@ router.get('/tasks', async (req, res) => {
       KeyConditionExpression: 'user_id = :uid',
       FilterExpression: 'active_note = :active',
       ExpressionAttributeValues: {
-        ':uid': String(userId),
+        ':uid': userId,
         ':active': true
       }
     }).promise();
-    res.json(result.Items);
+
+    return res.json(result.Items);
   } catch (err) {
-    handleError(res, 'Query active tasks', err);
+    return handleError(res, 'Query active tasks', err);
   }
 });
 
-// Create a new task
+// CREATE a new task
 router.post('/tasks', async (req, res) => {
-  const userId = req.session.userId;
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  const userId = req.auth?.sub;
+  if (!userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-  const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
+  const {
+    task_title,
+    task_details,
+    priority_lev,
+    est_hour,
+    est_min,
+    due_dates,
+    notification_yes
+  } = req.body;
+
   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -66,19 +173,30 @@ router.post('/tasks', async (req, res) => {
 
   try {
     await dynamo.put({ TableName: TASKS_TABLE, Item: task }).promise();
-    res.status(201).json({ message: 'Task created', task });
+    return res.status(201).json({ message: 'Task created', task });
   } catch (err) {
-    handleError(res, 'Create task', err);
+    return handleError(res, 'Create task', err);
   }
 });
 
-// Update an existing task and clear schedule
+// UPDATE an existing task
 router.put('/tasks/:id', async (req, res) => {
-  const userId = req.session.userId;
-  const { id } = req.params;
-  const { task_title, task_details, priority_lev, est_hour, est_min, due_dates, notification_yes } = req.body;
+  const userId = req.auth?.sub;
+  if (!userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  const { id } = req.params;
+  const {
+    task_title,
+    task_details,
+    priority_lev,
+    est_hour,
+    est_min,
+    due_dates,
+    notification_yes
+  } = req.body;
+
   if (!task_title || priority_lev == null || est_hour == null || est_min == null || !due_dates) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -103,15 +221,19 @@ router.put('/tasks/:id', async (req, res) => {
         'SET task_title = :title, task_details = :details, priority_lev = :priority, est_hour = :hour, est_min = :min, due_dates = :due, notification_yes = :notify, scheduled_time = :sched, end_time = :end',
       ExpressionAttributeValues: values
     }).promise();
-    res.json({ message: 'Task updated and schedule cleared' });
+
+    return res.json({ message: 'Task updated and schedule cleared' });
   } catch (err) {
-    handleError(res, 'Update task', err);
+    return handleError(res, 'Update task', err);
   }
 });
 
+
+
 // Schedule a task
 router.put('/tasks/schedule/:id', async (req, res) => {
-  const userId = req.session.userId;
+  // const userId = req.session.userId;
+  const userId = req.auth?.sub;
   const { id } = req.params;
   const { scheduled_time, est_hour, est_min, timezone: tz } = req.body;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -139,7 +261,8 @@ router.put('/tasks/schedule/:id', async (req, res) => {
 
 // Unschedule a task
 router.put('/tasks/unschedule/:id', async (req, res) => {
-  const userId = req.session.userId;
+  // const userId = req.session.userId;
+  const userId = req.auth?.sub;
   const { id } = req.params;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
@@ -157,7 +280,8 @@ router.put('/tasks/unschedule/:id', async (req, res) => {
 
 // Delete task: mark inactive and compute note_life
 router.delete('/tasks/:id', async (req, res) => {
-  const userId = req.session.userId;
+  // const userId = req.session.userId;
+  const userId = req.auth?.sub;
   const { id } = req.params;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
@@ -189,7 +313,8 @@ router.delete('/tasks/:id', async (req, res) => {
 
 // Suggest next available time slot
 router.get('/tasks/suggest', async (req, res) => {
-  const userId = req.session.userId;
+  // const userId = req.session.userId;
+  const userId = req.auth?.sub;
   const duration = parseInt(req.query.duration, 10);
   const ignoreBreak = req.query.ignoreBreak === 'true';
   const breakBuffer = ignoreBreak ? 0 : 15;
@@ -226,7 +351,8 @@ router.get('/tasks/suggest', async (req, res) => {
 
 // Validate custom schedule time
 router.post('/tasks/validate-time', async (req, res) => {
-  const userId = req.session.userId;
+  // const userId = req.session.userId;
+  const userId = req.auth?.sub;
   const { scheduled_time, est_hour, est_min, ignoreBreak } = req.body;
   const breakBuffer = ignoreBreak === true ? 0 : 15;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
