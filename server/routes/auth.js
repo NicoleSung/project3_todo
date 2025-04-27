@@ -147,7 +147,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
 
 // — WHO AM I? —
-router.get('/api/auth/me', (req, res) => {
+router.get('/me', (req, res) => {
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ authenticated: false, error: 'No token' });
