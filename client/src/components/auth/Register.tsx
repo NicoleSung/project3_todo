@@ -16,7 +16,7 @@ export default function Register() {
   const hasUppercase = /[A-Z]/.test(form.password);
   const hasLowercase = /[a-z]/.test(form.password);
   const hasNumber = /[0-9]/.test(form.password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_-]/.test(form.password);
   const allValid = isLongEnough && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +89,7 @@ export default function Register() {
         <p style={{color: hasUppercase ? 'green' : 'red', margin: "2px 0"}}>✓ Uppercase letter</p>
         <p style={{color: hasLowercase ? 'green' : 'red', margin: "2px 0"}}>✓ Lowercase letter</p>
         <p style={{color: hasNumber ? 'green' : 'red', margin: "2px 0"}}>✓ Number</p>
-        <p style={{color: hasSpecialChar ? 'green' : 'red', margin: "2px 0"}}>✓ Special character (!@#$%^&*(),.?":{}|&lt;&gt;)</p>
+        <p style={{color: hasSpecialChar ? 'green' : 'red', margin: "2px 0"}}>✓ Special character (!@#$%^&*(),.?":{}|&lt;&gt;_-)</p>
       </div>
 
       <form onSubmit={handleSubmit}>
