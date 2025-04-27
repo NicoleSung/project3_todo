@@ -106,47 +106,6 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 // — WHO AM I? —
-// router.get('/me', async (req, res) => {
-//   const token = req.headers.authorization?.split(' ')[1];
-//   if (!token) {
-//     return res.status(401).json({ authenticated: false, error: 'No token provided.' });
-//   }
-
-//   try {
-//     const decoded = jwt.decode(token, { complete: true });
-//     if (!decoded) throw new Error('Invalid token');
-
-//     const jwks = jwksRsa({
-//       jwksUri: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json`
-//     });
-
-//     const getKey = (header, callback) =>
-//       jwks.getSigningKey(header.kid, (err, key) => callback(null, key.getPublicKey()));
-
-//     jwt.verify(
-//       token,
-//       getKey,
-//       {
-//         audience: CLIENT_ID,
-//         issuer: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
-//         algorithms: ['RS256'],
-//       },
-//       (err, payload) => {
-//         if (err) {
-//           console.error('JWT verify error:', err);
-//           return res.status(401).json({ authenticated: false });
-//         }
-//         res.json({ authenticated: true, user: payload });
-//       }
-//     );
-//   } catch (err) {
-//     console.error('[WhoAmI]', err);
-//     return res.status(401).json({ authenticated: false });
-//   }
-// });
-
-
-// — WHO AM I? —
 router.get('/me', (req, res) => {
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
@@ -185,7 +144,6 @@ router.get('/me', (req, res) => {
     }
   );
 });
-
 
 // — LOGOUT —
 router.post('/logout', (req, res) => {

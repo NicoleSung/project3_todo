@@ -31,32 +31,8 @@ export default function Login() {
       onSuccess: (session) => {
         console.log('Login successful!');
 
-        // const token = session.getAccessToken().getJwtToken();
-        // console.log('Access token:', token);
-
-        // // Store the token so it can be sent in Authorization headers
-        // localStorage.setItem('accessToken', token);
-
         const idToken = session.getIdToken().getJwtToken();
-        console.log('ID token:', idToken);
-        localStorage.setItem('accessToken', idToken); // Actually storing ID token
-
-        // // Call protected route to verify backend access
-        // const fetchDashboardData = async () => {
-        //   try {
-        //     const res = await apiFetch('/api/dashboard');
-        //     const data = await res.json();
-        //     console.log('Dashboard data:', data);
-        //   } catch (error) {
-        //     console.error('Failed to fetch dashboard data:', error);
-        //     setError('Failed to fetch dashboard data.');
-        //   }
-        // };
-
-        // fetchDashboardData();
-
-        // navigate('/dashboard');
-
+        localStorage.setItem('accessToken', idToken);
 
         apiFetch('/api/auth/me')
           .then(res => res.json())
