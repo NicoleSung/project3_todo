@@ -41,19 +41,19 @@ export default function Login() {
         console.log('ID token:', idToken);
         localStorage.setItem('accessToken', idToken); // Actually storing ID token
 
-        // Call protected route to verify backend access
-        const fetchDashboardData = async () => {
-          try {
-            const res = await apiFetch('/api/dashboard');
-            const data = await res.json();
-            console.log('Dashboard data:', data);
-          } catch (error) {
-            console.error('Failed to fetch dashboard data:', error);
-            setError('Failed to fetch dashboard data.');
-          }
-        };
+        // // Call protected route to verify backend access
+        // const fetchDashboardData = async () => {
+        //   try {
+        //     const res = await apiFetch('/api/dashboard');
+        //     const data = await res.json();
+        //     console.log('Dashboard data:', data);
+        //   } catch (error) {
+        //     console.error('Failed to fetch dashboard data:', error);
+        //     setError('Failed to fetch dashboard data.');
+        //   }
+        // };
 
-        fetchDashboardData();
+        // fetchDashboardData();
 
         navigate('/dashboard');
       },
