@@ -55,7 +55,23 @@ export default function Login() {
 
         // fetchDashboardData();
 
-        navigate('/dashboard');
+        // navigate('/dashboard');
+
+
+        apiFetch('/api/auth/me')
+          .then(res => res.json())
+          .then(({ authenticated, user }) => {
+            if (authenticated) {
+              console.log('Auth OK:', user);
+              navigate('/dashboard');
+            } else {
+              setError('Authentication check failed.');
+            }
+          })
+          .catch(err => {
+            console.error('Auth.me error:', err);
+            setError('Unable to verify session.');
+          });
       },
       onFailure: (err) => {
         console.error('Login failed:', err);
