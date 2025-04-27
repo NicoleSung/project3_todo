@@ -103,24 +103,20 @@ export default function Register() {
           onChange={handleChange}
         />
 
-        {/* <button type="submit" 
-        // disabled={!allValid}
-        > */}
+        <button type="submit" 
+        disabled={!allValid}
+        >
 
-        <button
+        {/* <button
         type="submit"
         // disabled={!allValid} // Keep disabled commented out for testing
         onClick={() => {
           console.log('Register BUTTON CLICKED!'); // Add this log
         }}
-        >
+        > */}
           Register
         </button>
       </form>
-
-      <button onClick={() => console.log('SIMPLE BUTTON CLICKED')}>
-      Test Click Me
-      </button>
 
       <div className={styles.link}>
         Already have an account? <a href="/login">Login here</a>
