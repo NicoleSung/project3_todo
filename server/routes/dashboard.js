@@ -186,40 +186,6 @@ router.put('/tasks/unschedule/:id', async (req, res) => {
   }
 });
 
-// // Delete task: mark inactive and compute note_life
-// router.delete('/tasks/:id', async (req, res) => {
-//   // const userId = req.session.userId;
-//   const userId = req.auth?.sub;
-//   const { id } = req.params;
-//   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-
-//   try {
-//     const { Item: task } = await dynamo.get({ TableName: TASKS_TABLE, Key: { id } }).promise();
-//     if (!task || task.user_id !== userId) return res.status(404).json({ error: 'Task not found' });
-
-//     if (!task.note_creation_time) {
-//       return res.status(400).json({ error: 'Missing note_creation_time' });
-//     }
-
-//     const now = dayjs();
-//     const noteLife = now.diff(dayjs(task.note_creation_time), 'minute');
-//     await dynamo.update({
-//       TableName: TASKS_TABLE,
-//       Key: { id },
-//       UpdateExpression: 'SET active_note = :a, note_deletion_time = :d, note_life = :l',
-//       ExpressionAttributeValues: {
-//         ':a': false,
-//         ':d': now.toISOString(),
-//         ':l': noteLife
-//       }
-//     }).promise();
-//     res.json({ message: 'Task deleted and note_life recorded' });
-//   } catch (err) {
-//     handleError(res, 'Delete task', err);
-//   }
-// });
-
-
 // Delete task: mark inactive and record deletion time and life
 router.delete('/tasks/:id', async (req, res) => {
   const userId = req.auth?.sub;
@@ -261,7 +227,6 @@ router.delete('/tasks/:id', async (req, res) => {
     handleError(res, 'Delete task', err);
   }
 });
-
 
 // Suggest next available time slot
 router.get('/tasks/suggest', async (req, res) => {
