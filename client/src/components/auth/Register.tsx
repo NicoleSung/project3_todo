@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './auth.module.css';
+// import styles from './auth.module.css';
 import UserPool from '../../awsConfig';
 
 export default function Register() {
@@ -118,7 +118,6 @@ export default function Register() {
         </button>
       </form>
 
-      {/* Add this temporary button */}
       <button onClick={() => console.log('SIMPLE BUTTON CLICKED')}>Test Click Me</button>
 
       <div className={styles.link}>
