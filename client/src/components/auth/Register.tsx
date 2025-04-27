@@ -89,7 +89,7 @@ export default function Register() {
         <p style={{color: hasUppercase ? 'green' : 'red', margin: "2px 0"}}>✓ Uppercase letter</p>
         <p style={{color: hasLowercase ? 'green' : 'red', margin: "2px 0"}}>✓ Lowercase letter</p>
         <p style={{color: hasNumber ? 'green' : 'red', margin: "2px 0"}}>✓ Number</p>
-        <p style={{color: hasSpecialChar ? 'green' : 'red', margin: "2px 0"}}>✓ Special character (!@#$%^&*(),.?":{}|<>)</p>
+        <p style={{color: hasSpecialChar ? 'green' : 'red', margin: "2px 0"}}>✓ Special character (!@#$%^&*(),.?":{}|&lt;&gt;)</p>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -115,6 +115,7 @@ export default function Register() {
         <button 
           type="submit"
           disabled={!allValid}
+          onClick={() => console.log('Register button clicked')}
         >
           Register
         </button>
