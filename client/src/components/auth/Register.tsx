@@ -33,7 +33,6 @@ export default function Register() {
         console.log('!!! SIGNUP CALLBACK - ERROR BLOCK ENTERED !!!'); 
         console.error('[Register] Error Object:', err); // Log the full error object
 
-
         // Show friendly helper if password fails policy
         if (
           err.code === 'InvalidPasswordException' ||
@@ -83,6 +82,16 @@ export default function Register() {
         </ul>
       )}
 
+      {/* Password requirements visibility */}
+      <div style={{margin: "10px 0", padding: "10px", backgroundColor: "#f8f9fa", borderRadius: "5px"}}>
+        <p style={{fontWeight: "bold", marginBottom: "5px"}}>Password must have:</p>
+        <p style={{color: isLongEnough ? 'green' : 'red', margin: "2px 0"}}>✓ 8+ characters</p>
+        <p style={{color: hasUppercase ? 'green' : 'red', margin: "2px 0"}}>✓ Uppercase letter</p>
+        <p style={{color: hasLowercase ? 'green' : 'red', margin: "2px 0"}}>✓ Lowercase letter</p>
+        <p style={{color: hasNumber ? 'green' : 'red', margin: "2px 0"}}>✓ Number</p>
+        <p style={{color: hasSpecialChar ? 'green' : 'red', margin: "2px 0"}}>✓ Special character (!@#$%^&*(),.?":{}|<>)</p>
+      </div>
+
       <form onSubmit={handleSubmit}>
         <label>Email</label>
         <input
@@ -103,17 +112,10 @@ export default function Register() {
           onChange={handleChange}
         />
 
-        <button type="submit" 
-        disabled={!allValid}
+        <button 
+          type="submit"
+          disabled={!allValid}
         >
-
-        {/* <button
-        type="submit"
-        // disabled={!allValid} // Keep disabled commented out for testing
-        onClick={() => {
-          console.log('Register BUTTON CLICKED!'); // Add this log
-        }}
-        > */}
           Register
         </button>
       </form>
