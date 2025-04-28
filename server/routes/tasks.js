@@ -33,18 +33,6 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/tasks/suggest?duration=...&ignoreBreak=...
-// router.get('/suggest', async (req, res) => {
-//   const userId = req.auth.sub;
-//   const duration = parseInt(req.query.duration, 10);
-//   // if (!duration) {
-//   if (isNaN(duration) || duration <= 0) {
-//     return res.status(400).json({ error: 'Missing or invalid duration' });
-//   }
-//   // TODO: replace stub logic with real suggestion algorithm
-//   const suggestion = dayjs().add(1, 'hour').toISOString();
-//   res.json({ suggested_time: suggestion });
-// });
-
 router.get('/suggest', async (req, res) => {
   const userId = req.auth.sub;
   const duration = parseInt(req.query.duration, 10);
@@ -58,7 +46,6 @@ router.get('/suggest', async (req, res) => {
   const suggestion = dayjs().add(1, 'hour').toISOString();
   res.json({ suggested_time: suggestion });
 });
-
 
 // POST /api/tasks/validate-time
 router.post('/validate-time', async (req, res) => {
@@ -148,24 +135,55 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// // PUT /api/tasks/schedule/:id — schedule a task
+// router.put('/schedule/:id', async (req, res) => {
+//   const userId = req.auth.sub;
+//   const { id } = req.params;
+//   const { scheduled_time, timezone } = req.body;
+//   if (!scheduled_time || !timezone) {
+//     return res.status(400).json({ error: 'Missing required fields' });
+//   }
+//   try {
+//     await dynamo.update({
+//       TableName: TASKS_TABLE,
+//       Key: { id },
+//       UpdateExpression: 'SET scheduled_time = :st, timezone = :tz',
+//       ExpressionAttributeValues: {
+//         ':st': scheduled_time,
+//         ':tz': timezone
+//       }
+//     }).promise();
+//     res.json({ message: 'Task scheduled' });
+//   } catch (err) {
+//     console.error('PUT /tasks/schedule/:id error', err);
+//     res.status(500).json({ error: 'Could not schedule task' });
+//   }
+// });
+
 // PUT /api/tasks/schedule/:id — schedule a task
 router.put('/schedule/:id', async (req, res) => {
   const userId = req.auth.sub;
   const { id } = req.params;
   const { scheduled_time, timezone } = req.body;
+
   if (!scheduled_time || !timezone) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
   try {
     await dynamo.update({
       TableName: TASKS_TABLE,
       Key: { id },
-      UpdateExpression: 'SET scheduled_time = :st, timezone = :tz',
+      UpdateExpression: 'SET scheduled_time = :st, #tz = :tz',
+      ExpressionAttributeNames: {
+        '#tz': 'timezone'
+      },
       ExpressionAttributeValues: {
         ':st': scheduled_time,
         ':tz': timezone
       }
     }).promise();
+
     res.json({ message: 'Task scheduled' });
   } catch (err) {
     console.error('PUT /tasks/schedule/:id error', err);
