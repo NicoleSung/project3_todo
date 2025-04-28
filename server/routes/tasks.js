@@ -33,17 +33,32 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/tasks/suggest?duration=...&ignoreBreak=...
+// router.get('/suggest', async (req, res) => {
+//   const userId = req.auth.sub;
+//   const duration = parseInt(req.query.duration, 10);
+//   // if (!duration) {
+//   if (isNaN(duration) || duration <= 0) {
+//     return res.status(400).json({ error: 'Missing or invalid duration' });
+//   }
+//   // TODO: replace stub logic with real suggestion algorithm
+//   const suggestion = dayjs().add(1, 'hour').toISOString();
+//   res.json({ suggested_time: suggestion });
+// });
+
 router.get('/suggest', async (req, res) => {
   const userId = req.auth.sub;
   const duration = parseInt(req.query.duration, 10);
-  // if (!duration) {
-  if (isNaN(duration) || duration <= 0) {
+
+  // only reject when duration is truly invalid (NaN)
+  if (isNaN(duration)) {
     return res.status(400).json({ error: 'Missing or invalid duration' });
   }
-  // TODO: replace stub logic with real suggestion algorithm
+
+  // TODO: replace stub logic with your scheduling algorithm
   const suggestion = dayjs().add(1, 'hour').toISOString();
   res.json({ suggested_time: suggestion });
 });
+
 
 // POST /api/tasks/validate-time
 router.post('/validate-time', async (req, res) => {
