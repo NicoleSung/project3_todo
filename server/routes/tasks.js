@@ -233,13 +233,29 @@ router.put('/schedule/:id', async (req, res) => {
 });
 
 // PUT /api/tasks/unschedule/:id — remove scheduled_time
+// router.put('/unschedule/:id', async (req, res) => {
+//   const { id } = req.params;
+//   try {
+//     await dynamo.update({
+//       TableName: TASKS_TABLE,
+//       Key: { id },
+//       UpdateExpression: 'REMOVE scheduled_time, timezone'
+//     }).promise();
+//     res.json({ message: 'Task unscheduled' });
+//   } catch (err) {
+//     console.error('PUT /tasks/unschedule/:id error', err);
+//     res.status(500).json({ error: 'Could not unschedule task' });
+//   }
+// });
+
 router.put('/unschedule/:id', async (req, res) => {
   const { id } = req.params;
   try {
     await dynamo.update({
       TableName: TASKS_TABLE,
       Key: { id },
-      UpdateExpression: 'REMOVE scheduled_time, timezone'
+      UpdateExpression: 'REMOVE scheduled_time, #tz',
+      ExpressionAttributeNames: { '#tz': 'timezone' }
     }).promise();
     res.json({ message: 'Task unscheduled' });
   } catch (err) {
@@ -247,6 +263,7 @@ router.put('/unschedule/:id', async (req, res) => {
     res.status(500).json({ error: 'Could not unschedule task' });
   }
 });
+
 
 // DELETE /api/tasks/:id — soft‑delete
 router.delete('/:id', async (req, res) => {
