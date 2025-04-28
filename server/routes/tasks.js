@@ -32,32 +32,98 @@ router.get('/', async (req, res) => {
   }
 });
 
+// // GET /api/tasks/suggest?duration=...&ignoreBreak=...
+// router.get('/suggest', async (req, res) => {
+//   const userId = req.auth.sub;
+//   const duration = parseInt(req.query.duration, 10);
+
+//   // only reject when duration is truly invalid (NaN)
+//   if (isNaN(duration)) {
+//     return res.status(400).json({ error: 'Missing or invalid duration' });
+//   }
+
+//   // TODO: replace stub logic with your scheduling algorithm
+//   const suggestion = dayjs().add(1, 'hour').toISOString();
+//   res.json({ suggested_time: suggestion });
+// });
+
+// // POST /api/tasks/validate-time
+// router.post('/validate-time', async (req, res) => {
+//   const userId = req.auth.sub;
+//   const { scheduled_time, est_hour, est_min, ignoreBreak } = req.body;
+//   if (!scheduled_time || est_hour == null || est_min == null) {
+//     return res.status(400).json({ error: 'Missing required fields' });
+//   }
+//   // TODO: replace stub logic with real conflict detection
+//   // we'll assume any time is valid
+//   res.json({});
+// });
+
+// … above imports, router.use(authenticate), etc …
+
 // GET /api/tasks/suggest?duration=...&ignoreBreak=...
 router.get('/suggest', async (req, res) => {
-  const userId = req.auth.sub;
-  const duration = parseInt(req.query.duration, 10);
+  const userId     = req.auth.sub;
+  const duration   = parseInt(req.query.duration, 10);    // in minutes
+  const ignoreBreak= req.query.ignoreBreak === 'true';
 
-  // only reject when duration is truly invalid (NaN)
   if (isNaN(duration)) {
     return res.status(400).json({ error: 'Missing or invalid duration' });
   }
 
-  // TODO: replace stub logic with your scheduling algorithm
-  const suggestion = dayjs().add(1, 'hour').toISOString();
-  res.json({ suggested_time: suggestion });
+  try {
+    // 1) Fetch all tasks with a scheduled_time
+    const result = await dynamo
+      .query({
+        TableName: TASKS_TABLE,
+        IndexName: 'user_id_index',
+        KeyConditionExpression: 'user_id = :uid',
+        FilterExpression: 'attribute_exists(scheduled_time)',
+        ExpressionAttributeValues: { ':uid': userId }
+      })
+      .promise();
+
+    // 2) Build busy windows
+    const busyWindows = result.Items.map(t => {
+      const start = dayjs(t.scheduled_time);
+      // compute end = start + est_hour/est_min
+      const end   = start.add(t.est_hour, 'hour').add(t.est_min, 'minute');
+      return { start, end };
+    });
+
+    // optional break in ms
+    const breakMs = ignoreBreak ? 0 : 15 * 60 * 1000;
+
+    // 3) Slide a window forward in 15‑min increments
+    let cursor = dayjs();
+    const horizon = dayjs().add(7, 'day');
+
+    while (cursor.isBefore(horizon)) {
+      const slotStart = cursor;
+      const slotEnd   = slotStart.add(duration, 'minute');
+
+      // check for conflict
+      const conflict = busyWindows.some(w =>
+        // if w.end + break > slotStart AND w.start < slotEnd => overlap
+        w.end.add(breakMs, 'millisecond').isAfter(slotStart) &&
+        w.start.isBefore(slotEnd)
+      );
+
+      if (!conflict) {
+        return res.json({ suggested_time: slotStart.toISOString() });
+      }
+
+      cursor = cursor.add(15, 'minute');
+    }
+
+    // 4) nothing found
+    return res.status(404).json({ error: 'No available slot in next 7 days' });
+  } catch (err) {
+    console.error('GET /tasks/suggest error', err);
+    return res.status(500).json({ error: 'Could not compute suggestion' });
+  }
 });
 
-// POST /api/tasks/validate-time
-router.post('/validate-time', async (req, res) => {
-  const userId = req.auth.sub;
-  const { scheduled_time, est_hour, est_min, ignoreBreak } = req.body;
-  if (!scheduled_time || est_hour == null || est_min == null) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  // TODO: replace stub logic with real conflict detection
-  // we'll assume any time is valid
-  res.json({});
-});
 
 // POST /api/tasks — create task
 router.post('/', async (req, res) => {
@@ -134,31 +200,6 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Could not update task' });
   }
 });
-
-// // PUT /api/tasks/schedule/:id — schedule a task
-// router.put('/schedule/:id', async (req, res) => {
-//   const userId = req.auth.sub;
-//   const { id } = req.params;
-//   const { scheduled_time, timezone } = req.body;
-//   if (!scheduled_time || !timezone) {
-//     return res.status(400).json({ error: 'Missing required fields' });
-//   }
-//   try {
-//     await dynamo.update({
-//       TableName: TASKS_TABLE,
-//       Key: { id },
-//       UpdateExpression: 'SET scheduled_time = :st, timezone = :tz',
-//       ExpressionAttributeValues: {
-//         ':st': scheduled_time,
-//         ':tz': timezone
-//       }
-//     }).promise();
-//     res.json({ message: 'Task scheduled' });
-//   } catch (err) {
-//     console.error('PUT /tasks/schedule/:id error', err);
-//     res.status(500).json({ error: 'Could not schedule task' });
-//   }
-// });
 
 // PUT /api/tasks/schedule/:id — schedule a task
 router.put('/schedule/:id', async (req, res) => {
